@@ -1,5 +1,6 @@
-require "nali/version"
-
-module Nali
-  # Your code goes here...
-end
+require 'nali/extensions'
+require 'nali/application'
+require 'nali/connection'
+require 'nali/controller'
+require 'nali/model'
+require 'nali/helpers'
