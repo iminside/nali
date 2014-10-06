@@ -21,6 +21,8 @@ module Nali
     configure do
       assets.cache = Sprockets::Cache::FileStore.new File.join( root, 'tmp/cache' )
       
+      assets.append_path File.join( Nali.gem_path, 'lib/assets/javascripts' ) 
+      
       %w( app/templates app/assets/stylesheets app/assets/javascripts lib/assets/stylesheets 
           lib/assets/javascripts vendor/assets/stylesheets vendor/assets/javascripts
       ).each { |path| assets.append_path File.join( root, path ) }

@@ -10,13 +10,13 @@ Gem::Specification.new do |spec|
   spec.email         = ["4urbanoff@gmail.com"]
   spec.description   = "Realtime app"
   spec.summary       = "summary"
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/4urbanoff/nali"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + ["LICENSE.txt", "Rakefile", "Gemfile", "README.md"]
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
-  spec.require_paths = ["lib"]
+  spec.require_path  = "lib"
 
   spec.add_dependency "thin"
   spec.add_dependency "sinatra"
