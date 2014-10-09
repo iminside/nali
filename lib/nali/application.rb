@@ -19,9 +19,10 @@ module Nali
     require File.join( root, 'config/environments', environment.to_s )
     
     configure do
+      
       assets.cache = Sprockets::Cache::FileStore.new File.join( root, 'tmp/cache' )
       
-      assets.append_path File.join( Nali.gem_path, 'lib/assets/javascripts' ) 
+      assets.append_path File.join( Nali.path, 'assets/javascripts' ) 
       
       %w( app/templates app/assets/stylesheets app/assets/javascripts lib/assets/stylesheets 
           lib/assets/javascripts vendor/assets/stylesheets vendor/assets/javascripts
@@ -46,53 +47,24 @@ module Nali
         settings.assets[ 'application.html' ]
       else
         request.websocket do |client|
-          client.onopen    { onopen client }
-          client.onmessage { |message| onmessage( client, JSON.parse( message ).keys_to_sym! ) }
-          client.onclose   { onclose client }
+          client.onopen    { Nali::Clients.on_client_connected client }
+          client.onmessage { |message| Nali::Clients.on_received_message( client, JSON.parse( message ).keys_to_sym! ) }
+          client.onclose   { Nali::Clients.on_client_disconnected client }
         end
       end
     end
     
-    def onopen( client )
-      clients << client
-      client_connected client 
-    end
-    
-    def onmessage( client, message )
-      if controller = Object.const_get( message[ :controller ].capitalize + 'Controller' )
-        controller = controller.new( client, message )
-        if controller.methods.include?( action = message[ :action ].to_sym )
-          controller.send action
-        else puts "Action #{ action } not exists in #{ controller }" end
-      else puts "Controller #{ controller } not exists" end
-      on_message client, message
-    end
-    
-    def onclose( client )
-      clients.delete client
-      client_disconnected client
-    end
-    
-    def client_connected( client )
-    end
-    
-    def on_message( client, message )
-    end
-    
-    def client_disconnected( client )
-    end
-    
-    def clients
-      self.class.clients
-    end
-    
-    def self.clients
-      @@clients ||= []
+    def self.access_options
+      if settings.environment == :development
+        YAML.load_file( File.join( root, 'app/models/access.yml' ) ).keys_to_sym!
+      else
+        @access_options ||= YAML.load_file( File.join( root, 'app/models/access.yml' ) ).keys_to_sym!
+      end
     end
     
     def self.initialize!
       Dir[ File.join( root, 'lib/*/**/*.rb'    ) ].each { |file| require( file ) }
-      Dir[ File.join( root, 'app/*/**/*.rb'    ) ].each { |file| require( file ) }
+      Dir[ File.join( root, 'app/**/*.rb'    ) ].each { |file| require( file ) }
       Dir[ File.join( root, 'vendor/*/**/*.rb' ) ].each { |file| require( file ) }
       require File.join( root, 'config/application' )
       self

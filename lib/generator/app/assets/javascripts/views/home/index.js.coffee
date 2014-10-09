@@ -1,0 +1,1 @@
+Nali.View.extend HomeIndex: {}

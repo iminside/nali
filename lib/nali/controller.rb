@@ -11,25 +11,34 @@ module Nali
     end
     
     def clients
-      Nali::Application.clients
+      Nali::Clients.clients
     end
     
     def save
-      if params[ :id ]
-        if model = model_class.find_by_id( params[ :id ] )
-          save_success( model ) if model.update_attributes( params )
-        end
-      else
-        if ( model = model_class.new( params ) ).valid?
-          save_success( model ) if model.save
-        end
+      params[ :id ] ? update : create
+    end
+    
+    def create
+      model = model_class.new params 
+      model.access_action( :create, client ) do |options|
+        permit_params options
+        if ( model = model_class.new( params ) ).save
+          trigger_success model.get_sync_params( client )[0]
+          model.sync client
+        else trigger_failure end
       end
     end
     
-    def save_success( model )
-      on_save( model ) if self.methods.include?( :on_save )
-      trigger_success model.get_sync_params( client )
-      model.sync client
+    def update
+      if model = model_class.find_by_id( params[ :id ] )
+        model.access_action( :update, client ) do |options|
+          permit_params options
+          if model.update( params )
+            trigger_success model.get_sync_params( client )[0] 
+            model.sync client
+          else trigger_failure end
+        end
+      end
     end
     
     def select
@@ -39,10 +48,12 @@ module Nali
 
     def destroy
       if model = model_class.find_by_id( params[ :id ] )
-        on_destroy( model ) if self.methods.include?( :on_destroy )
-        model.destroy() 
-        model.sync
-      end
+        model.access_action( :destroy, client ) do |options|
+          model.destroy()
+          trigger_success model.id 
+          model.sync
+        end
+      else trigger_failure end
     end
     
     def trigger_success( params = nil )
@@ -54,6 +65,11 @@ module Nali
     end
     
     private 
+    
+    def permit_params( filter )
+      params.keys.each { |key| params.delete( key ) unless filter.include?( key ) }
+      params
+    end
     
     def model_class
       Object.const_get model_name 

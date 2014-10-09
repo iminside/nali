@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+require 'nali/extensions'
+require 'nali/version'
+require 'nali/generator'
+require 'nali/path'
+
+if ['--version', '-v'].include?(ARGV.first)
+  puts "Nali #{Nali::VERSION}"
+  exit(0)
+end
+
+Nali::Generator.new ARGV

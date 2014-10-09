@@ -1,7 +1,6 @@
 module EventMachine
   module WebSocket
     class Connection
-      
          
       def filters( model_name )
         @filters ||= {} 
@@ -60,10 +59,11 @@ module EventMachine
       end
         
       def sync( model )
-        if model.sync_access( self ) and ( watch_time( model ) < model.updated_at.to_f or model.destroyed? )
+        params, relations = model.get_sync_params( self )
+        if not params.empty? and ( watch_time( model ) < model.updated_at.to_f or model.destroyed? )
           watch_time_up model
-          model.get_sync_models( self ).each { |relation| sync relation } unless model.destroyed?
-          send_json( { action: 'sync', params: model.get_sync_params( self ) } )
+          relations.each { |relation| sync relation }
+          send_json action: 'sync', params: params 
         end
       end
         

@@ -22,6 +22,6 @@ Nali.extend Application:
     unless @titleBox
       @_( '<title>' ).appendTo 'head' unless @_( 'head title' ).lenght
       @titleBox = @_ 'head title'
-    @titleBox.text @title
+    @titleBox[0].innerText = @title
     @trigger 'update.title'
     @

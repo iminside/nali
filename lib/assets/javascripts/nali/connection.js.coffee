@@ -38,12 +38,12 @@ Nali.extend Connection:
     @          
   
   success: ( message ) ->
-    @journal[ message.journal_id ].success message.params
+    @journal[ message.journal_id ].success? message.params
     delete @journal[ message.journal_id ] 
     @
     
   failure: ( message ) ->
-    @journal[ message.journal_id ].failure message.params
+    @journal[ message.journal_id ].failure? message.params
     delete @journal[ message.journal_id ] 
     @
     

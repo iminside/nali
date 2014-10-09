@@ -33,12 +33,9 @@ Nali.extend Model:
         @noticesWait.splice @noticesWait.indexOf( item ), 1
     @
   
-  force: ( attributes = {} ) ->
-    ( attributes = @copy attributes ).id ?= null
-    for name, value of @attributes when not ( name of attributes )
-      if value instanceof Object
-        attributes[ name ] = if value.default? then value.default else null
-      else attributes[ name ] = value or null
+  force: ( params = {} ) ->
+    attributes = @default_attributes()
+    attributes[ name ] = value for name, value of params
     attributes[ name ] = @normalizeValue value for name, value of attributes
     @clone( attributes: attributes ).accessing()
   
@@ -48,8 +45,8 @@ Nali.extend Model:
     @
   
   save: ( success, failure ) ->
-    if @isValid()?
-      @query "#{ @sysname.lowercase() }s.save", @attributes, #=> success? @
+    if @isValid()
+      @query "#{ @sysname.lowercase() }s.save", @attributes, 
         ( { attributes, created, updated } ) =>
           @update( attributes, updated, created ).write()
           success? @
@@ -110,7 +107,7 @@ Nali.extend Model:
     
   update_attribute: ( name, value ) ->
     value = @normalizeValue value
-    if @attributes[ name ] isnt value and @isValidAttributeValue( name, value )?
+    if @attributes[ name ] isnt value and @isValidAttributeValue( name, value )
       @attributes[ name ] = value
       @[ 'onUpdate' + name.capitalize() ]?()
       @trigger "update.#{ name }", @
@@ -129,19 +126,34 @@ Nali.extend Model:
       collection.add @build attributes
     @select filters
     collection  
+  
+  # работа с аттрибутами
+  
+  default_attributes: ->
+    # возвращает объект аттрибутов по умолчанию
+    attributes = id: null
+    for name, value of @attributes
+      if value instanceof Object 
+        attributes[ name ] = if value.default? then value.default else null
+      else attributes[ name ] = value
+    attributes
     
   normalizeValue: ( value ) ->
+    # приводит значения к нормальному виду, если в строке только числа - преобразуется к числу
+    # т.е. строка '123' становится числом 123, '123.5' становится 123.5, а '123abc' остается строкой
     if typeof value is 'string'
       value = "#{ value }".trim()
-      if value is ( ( correct = parseInt( value ) ) + '' ) then correct else value
+      if value is ( ( correct = parseFloat( value ) ) + '' ) then correct else value
     else value
 
   isCorrect: ( filters = {} ) ->
+    # проверяет соответствие аттрибутов модели определенному набору фильтров, возвращает true либо false
     return false unless Object.keys( filters ).length
     return false for name, filter of filters when not @isCorrectAttribute @attributes[ name ], filter
     return true
     
-  isCorrectAttribute: ( attribute, filter ) ->                  
+  isCorrectAttribute: ( attribute, filter ) ->          
+    # проверяет соответствие аттрибута модели определенному фильтру, возвращает true либо false
     return false unless attribute
     if filter instanceof RegExp
       filter.test attribute
@@ -153,19 +165,24 @@ Nali.extend Model:
       attribute.toString() in filter or parseInt( attribute ) in filter
     else false 
     
+  # работа со связями 
+    
   setRelations: ->
+    # устанавливает геттеры к объектам связанным с моделью
     @belongsToRelation  attribute for attribute of @attributes when /_id$/.test attribute
     @hasOneRelation     attribute for attribute in [].concat @hasOne
     @hasManyRelation    attribute for attribute in [].concat @hasMany
     @  
     
   belongsToRelation: ( attribute ) ->
+    # устанавливает геттер типа belongs_to возвращающий связанную модель
     name  = attribute.replace '_id', ''
     model = @Model.extensions[ name.capitalize() ]
     @getter name, => model.find @[ attribute ]
     @ 
   
   hasOneRelation: ( name ) ->
+    # устанавливает геттер типа has_one возвращающий связанную модель
     @getter name, => 
       delete @[ name ]
       ( filters = {} )[ "#{ @sysname.lowercase() }_id" ] = @id
@@ -175,13 +192,17 @@ Nali.extend Model:
     @
   
   hasManyRelation: ( name ) ->
+    # устанавливает геттер типа has_many возвращающий коллекцию связанных моделей
     @getter name, => 
       delete @[ name ]
       ( filters = {} )[ "#{ @sysname.lowercase() }_id" ] = @id
       @[ name ] = @Model.extensions[ name[ ...-1 ].capitalize() ].where filters
     @     
   
+  # работа с видами
+  
   view: ( name ) ->
+    # приводит сокращенное имя к полному и возвращает объект вида, либо новый, либо ранее созданный
     name = @sysname + name.camelcase().capitalize() unless @View.extensions[ name ]?
     unless ( view = ( @views ?= {} )[ name ] )?
       if ( view = @View.extensions[ name ] )? 
@@ -190,9 +211,14 @@ Nali.extend Model:
     view
           
   show: ( name, insertTo ) ->
+    # вставляет html-код вида в указанное место ( это может быть селектор, html-элемент или ничего - тогда 
+    # вставка произойдет в элемент указанный в самом виде либо в элемент приложения )
+    # функция возвращает объект вида при успехе либо null при неудаче
     if ( view = @view( name ) )? then view.show insertTo else null 
       
   hide: ( name ) ->
+    # удаляет html-код вида со страницы
+    # функция возвращает объект вида при успехе либо null при неудаче
     if ( view = @view( name ) )? then view.hide() else null    
       
   # валидации
@@ -220,18 +246,18 @@ Nali.extend Model:
   
   isValid: ->
     # проверяет валидна ли модель, вызывается перед сохранением модели на сервер если модель валидна, 
-    # то вызов model.isValid()? вернет true, иначе false
-    return null for name, value of @attributes when not @isValidAttributeValue( name, value )? 
+    # то вызов model.isValid() вернет true, иначе false
+    return false for name, value of @attributes when not @isValidAttributeValue( name, value ) 
     true
     
   isValidAttributeValue: ( name, value ) ->
     # проверяет валидно ли значение для определенного атрибута модели, вызывается при проверке 
-    # валидности модели, а также в методе update() перед изменением значения атрибута, если значение
+    # валидности модели, а также в методе update_attribute() перед изменением значения атрибута, если значение
     # валидно то вызов model.isValidAttributeValue( name, value )? вернет true, иначе false
     for validation, tester of @validations when ( filter = @::attributes[ name ]?[ validation ] )?
       unless tester.call @, value, filter
         console.warn 'Attribute %s of model %O has not validate %s', name, @, validation
         for type in [ 'info', 'warning', 'error' ] when ( message = @::attributes[ name ][ type ] )?
           @Notice[ type ] message: message
-        return null 
+        return false
     true
