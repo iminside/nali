@@ -1,29 +1,26 @@
-# Nali
+# Welcome to Nali
 
-TODO: Write a gem description
+Nali is the framework for developing async web applications
 
-## Installation
+## Getting Started
 
-Add this line to your application's Gemfile:
+1. Install Nali at the command prompt if you haven't yet:
 
-    gem 'nali'
+        gem install nali
 
-And then execute:
+2. At the command prompt, create a new Nali application:
 
-    $ bundle
+        nali new appName
 
-Or install it yourself as:
+   where "appName" is the application name.
 
-    $ gem install nali
+3. Change directory to `appName` and run:
 
-## Usage
+        bundle install
 
-TODO: Write usage instructions here
+4. Start the web server
 
-## Contributing
+        bundle exec thin start
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Add some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+5. Using a browser, go to `http://localhost:3000` and you'll see:
+"Welcome no Nali"
