@@ -23,4 +23,4 @@ Nali is the framework for developing async web applications
         bundle exec thin start
 
 5. Using a browser, go to `http://localhost:3000` and you'll see:
-"Welcome no Nali"
+"Welcome to Nali"
