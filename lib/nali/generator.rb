@@ -3,21 +3,16 @@ module Nali
   class Generator
     
     def initialize( args )
-      if [ 'app', 'application' ].include?( args.first )
+      if args.first == 'new'
         if args[1] then create_application args[1]
         else puts 'Enter a name for the application' end
-      end
-        
-      if [ 'm', 'model' ].include?( args.first )
+      elsif [ 'm', 'model' ].include?( args.first )
         if args[1] then create_model args[1]
         else puts 'Enter a name for the model' end
-      end 
-        
-      if [ 'v', 'view' ].include?( args.first )
+      elsif [ 'v', 'view' ].include?( args.first )
         if args[1] then create_view args[1]
         else puts 'Enter a name for the view' end
       end  
-        
     end
     
     def create_application( name )
