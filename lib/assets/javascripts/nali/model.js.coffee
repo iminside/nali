@@ -22,29 +22,36 @@ Nali.extend Model:
     @
     
   notice: ( params ) ->
+    # добавляет уведомление в очередь на выполнение, запускает выполнение очереди
     @noticesWait.push params
     @runNotices()
     @
     
   runNotices: ->
+    # запускает выполнение уведомлений на существующих моделях
     for item, index in @noticesWait[ 0.. ]
       if model = @extensions[ item.model ].find item.id
         model[ item.notice ] item.params
         @noticesWait.splice @noticesWait.indexOf( item ), 1
     @
-  
-  force: ( params = {} ) ->
-    attributes = @default_attributes()
-    attributes[ name ] = value for name, value of params
-    attributes[ name ] = @normalizeValue value for name, value of attributes
-    @clone( attributes: attributes ).accessing()
+   
+  # работа с моделями
   
   accessing: ->
+    # устанавливает геттеры доступа к атрибутам и связям
     @access @attributes
     @setRelations()
     @
   
+  force: ( params = {} ) ->
+    # создает новую модель с заданными атрибутами
+    attributes = @default_attributes()
+    attributes[ name ] = value for name, value of params
+    attributes[ name ] = @normalizeValue value for name, value of attributes
+    @clone( attributes: attributes ).accessing()
+    
   save: ( success, failure ) ->
+    # отправляет на сервер запрос на сохранение модели, вызывает success в случае успеха и failure при неудаче
     if @isValid()
       @query "#{ @sysname.lowercase() }s.save", @attributes, 
         ( { attributes, created, updated } ) =>
@@ -54,6 +61,7 @@ Nali.extend Model:
     @
   
   sync: ( { sysname, attributes, created, updated, destroyed } ) ->
+    # синхронизирует пришедшую с сервера модель с локальной, либо создает новую
     if model = @extensions[ sysname ].find attributes.id 
       if destroyed then model.remove()
       else model.update attributes, updated, created
@@ -65,12 +73,11 @@ Nali.extend Model:
     @
     
   select: ( filters, success, failure ) ->
+    # отправляет на сервер запрос на выборку моделей по фильтру, вызывает success в случае успеха и failure при неудаче
     @query @sysname.lowercase() + 's.select', filters, success, failure if Object.keys( filters ).length
-    
-  destroy: ( success, failure ) ->
-    @query @sysname.lowercase() + 's.destroy', @attributes, success, failure
-             
+  
   write: ->
+    # добавляет модель во временную таблицу, генерирует событие create
     unless @ in @table
       @table.push @ 
       @table.index[ @id ] = @
@@ -80,6 +87,7 @@ Nali.extend Model:
     @
     
   remove: ->
+    # удаляет модель из временной таблицы, генерирует событие destroy
     if @ in @table
       delete @table.index[ @id ]
       @table.splice @table.indexOf( @ ), 1 
@@ -89,12 +97,15 @@ Nali.extend Model:
     @  
 
   build: ( attributes ) ->
+    # создает модель, не сохраняя её на сервере
     @force attributes
        
   create: ( attributes, success, failure ) ->
+    # создает модель, и сохраняет её на сервере, вызывает success в случае успеха и failure при неудаче
     @build( attributes ).save success, failure
     
   update: ( attributes, updated = 0, created = 0 ) ->
+    # обновляет атрибуты модели, проверяя их валидность, генерирует событие update
     if not updated or updated > @updated
       @created = created if created
       changed = []
@@ -106,6 +117,7 @@ Nali.extend Model:
     @
     
   update_attribute: ( name, value ) ->
+    # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.{ propertyName }
     value = @normalizeValue value
     if @attributes[ name ] isnt value and @isValidAttributeValue( name, value )
       @attributes[ name ] = value
@@ -113,11 +125,20 @@ Nali.extend Model:
       @trigger "update.#{ name }", @
       true
     else false
-      
+    
+  destroy: ( success, failure ) ->
+    # отправляет на сервер запрос на удаление модели, вызывает success в случае успеха и failure при неудаче
+    @query @sysname.lowercase() + 's.destroy', @attributes, success, failure
+  
+  # поиск моделей
+  
   find: ( id ) ->
+    # находит модель по её id используя индекс
     @table.index[ id ]
         
   where: ( filters ) ->
+    # находит все модели соответствующие фильтру, также отправляет запрос с фильтром на сервер, 
+    # возвращает коллекцию моделей, модели найденные на сервере также попадут в эту коллекцию
     collection = @Collection.clone model: @, filters: filters
     collection.add model for model in @table when model.isCorrect filters
     if @forced and not collection.length
