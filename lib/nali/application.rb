@@ -65,7 +65,7 @@ module Nali
     def self.initialize!
       Dir[ File.join( root, 'lib/*/**/*.rb'    ) ].each { |file| require( file ) }
       Dir[ File.join( root, 'app/**/*.rb'    ) ].each { |file| require( file ) }
-      Dir[ File.join( root, 'vendor/*/**/*.rb' ) ].each { |file| require( file ) }
+      #Dir[ File.join( root, 'vendor/*/**/*.rb' ) ].each { |file| require( file ) }
       require File.join( root, 'config/application' )
       self
     end
