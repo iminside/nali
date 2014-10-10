@@ -12,13 +12,17 @@ module Nali
     end
     
     def self.on_received_message( client, message )
-      if controller = Object.const_get( message[ :controller ].capitalize + 'Controller' )
-        controller = controller.new( client, message )
-        if controller.methods.include?( action = message[ :action ].to_sym )
-          controller.send action
-        else puts "Action #{ action } not exists in #{ controller }" end
-      else puts "Controller #{ controller } not exists" end
-      on_message client, message
+      if message[ :ping ]
+        client.send_json action: :pong
+      else
+        if controller = Object.const_get( message[ :controller ].capitalize + 'Controller' )
+          controller = controller.new( client, message )
+          if controller.methods.include?( action = message[ :action ].to_sym )
+            controller.send action
+          else puts "Action #{ action } not exists in #{ controller }" end
+        else puts "Controller #{ controller } not exists" end
+        on_message client, message
+      end
     end
     
     def self.on_client_disconnected( client )

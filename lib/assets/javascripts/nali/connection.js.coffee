@@ -10,22 +10,42 @@ Nali.extend Connection:
     @dispatcher.onopen    = ( event ) => @onOpen    event
     @dispatcher.onclose   = ( event ) => @onClose   event
     @dispatcher.onmessage = ( event ) => @onMessage JSON.parse event.data
-
-  journal: []
+    @keepAlive()
+    @
+    
+  connected:      false
+  keepAliveTimer: null
+  journal:        []
     
   onOpen: ( event ) ->
+    @connected = true
     @trigger 'open'
     
   onMessage: ( message ) ->
     @[ message.action ] message
     
   onClose: ( event ) ->
+    @connected = false
     @trigger 'close'
   
   send: ( msg ) ->
+    @open() unless @connected
     @dispatcher.send JSON.stringify msg
     @
-  
+      
+  keepAlive: ->
+    clearTimeout @keepAliveTimer if @keepAliveTimer
+    if @Application.keepAliveDelay
+      @keepAliveTimer = setTimeout =>
+        @keepAliveTimer = null
+        @send ping: true
+      , @Application.keepAliveDelay * 1000
+    @
+    
+  pong: ->
+    @keepAlive()
+    @
+    
   sync: ( message ) ->
     @Model.sync message.params 
     @

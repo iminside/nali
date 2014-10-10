@@ -63,7 +63,7 @@ module EventMachine
         if not params.empty? and ( watch_time( model ) < model.updated_at.to_f or model.destroyed? )
           watch_time_up model
           relations.each { |relation| sync relation }
-          send_json action: 'sync', params: params 
+          send_json action: :sync, params: params 
         end
       end
         

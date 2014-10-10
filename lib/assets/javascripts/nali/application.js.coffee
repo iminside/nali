@@ -1,11 +1,12 @@
 Nali.extend Application:
   
-  domEngine:     jBone.noConflict()
-  wsServer:      'ws://' + window.location.host
-  defaultUrl:    ''
-  notFoundUrl:   ''
-  htmlContainer: 'body'
-  title:         'Application'
+  domEngine:      jBone.noConflict()
+  wsServer:       'ws://' + window.location.host
+  defaultUrl:     ''
+  notFoundUrl:    ''
+  htmlContainer:  'body'
+  title:          'Application'
+  keepAliveDelay: 20
   
   run: ( options ) ->
     @::starting()
