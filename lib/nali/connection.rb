@@ -2,6 +2,12 @@ module EventMachine
   module WebSocket
     class Connection
          
+      def reset
+        @filters = {} 
+        @storage = {} 
+        @watches = {} 
+      end
+      
       def filters( model_name )
         @filters ||= {} 
         @filters[ model_name ] ||= []

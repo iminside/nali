@@ -9,6 +9,7 @@ Nali.extend Connection:
     @dispatcher = new WebSocket @Application.wsServer
     @dispatcher.onopen    = ( event ) => @onOpen    event
     @dispatcher.onclose   = ( event ) => @onClose   event
+    @dispatcher.onerror   = ( event ) => @onError   event
     @dispatcher.onmessage = ( event ) => @onMessage JSON.parse event.data
     @keepAlive()
     @
@@ -27,6 +28,9 @@ Nali.extend Connection:
   onClose: ( event ) ->
     @connected = false
     @trigger 'close'
+    
+  onError: ( event ) ->
+    console.warn 'Connection error %O', event
   
   send: ( msg ) ->
     @open() unless @connected
