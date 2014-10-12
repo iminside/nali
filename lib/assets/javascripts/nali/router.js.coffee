@@ -32,7 +32,7 @@ Nali.extend Router:
     if found = @findRoute url
       { controller, action, filters, params } = found
       params[ name ] = value for name, value in options
-      controller.runAction action, filters, params
+      controller.run action, filters, params
     else if @Application.notFoundUrl
       @go @Application.notFoundUrl
     else console.warn "Not exists route to the address %s", url

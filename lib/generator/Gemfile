@@ -2,10 +2,12 @@ source 'https://rubygems.org'
 
 gem 'nali'
 
-gem 'sqlite3'
+group :development, :test do
+  gem 'debugger'
+  gem 'sqlite3'
+end
 
-gem 'yui-compressor'
-
-gem 'uglifier'
-
-gem 'debugger'
+group :production do
+  gem 'yui-compressor'
+  gem 'uglifier'
+end

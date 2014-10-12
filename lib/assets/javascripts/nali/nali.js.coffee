@@ -81,7 +81,7 @@ window.Nali =
     @
   
   removeObservationItem: ( from, obj, event ) ->
-    for item in @[ from ][ 0.. ] when item[0] is obj and ( item[1] is event or not event )
+    for item in @[ from ][..] when item[0] is obj and ( item[1] is event or not event )
       @[ from ].splice @[ from ].indexOf( item ), 1
     @
     
@@ -115,13 +115,13 @@ window.Nali =
     @
   
   unsubscribeAll: ( event ) ->
-    @unsubscribe item[0], event for item in @observers[ 0.. ]
+    @unsubscribe item[0], event for item in @observers[..]
     @
   
   unsubscribeFromAll: ( event ) ->
-    @unsubscribeTo item[0], event for item in @observables[ 0.. ]
+    @unsubscribeTo item[0], event for item in @observables[..]
     @
     
   trigger: ( event, args... ) ->
-    item[2].call item[0], args... for item in @observers[ 0.. ] when item[1] is event
+    item[2].call item[0], args... for item in @observers[..] when item[1] is event
     @

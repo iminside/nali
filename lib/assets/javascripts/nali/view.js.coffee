@@ -190,8 +190,8 @@ Nali.extend View:
         for attribute, index in node.attributes 
           if attribute.name is 'bind'
             @assistantsMap.push nodepath: path, type: 'Form'
-          else if /{\s*.+?\s*}/.test attribute.textContent
-            @assistantsMap.push nodepath: path.concat( 'attributes', index ), type: 'Text'
+          else if /{\s*.+?\s*}/.test attribute.value
+            @assistantsMap.push nodepath: path.concat( 'attributes', index ), type: 'Attr'
       @scanAssistants child, path.concat 'childNodes', index for child, index in node.childNodes
     @
   
@@ -203,6 +203,11 @@ Nali.extend View:
   addTextAssistant: ( node ) ->
     initialValue = node.textContent
     @assistants.push -> node.textContent = @analize initialValue
+    @
+    
+  addAttrAssistant: ( node ) ->
+    initialValue = node.value
+    @assistants.push -> node.value = @analize initialValue
     @
     
   addHtmlAssistant: ( node ) ->
@@ -254,7 +259,7 @@ Nali.extend View:
               
         source.subscribe @, "update.#{ property }", =>
           option.selected = true for option in node when source[ property ] + '' is option.value
-        
+    @
         
         
   analize: ( value ) ->
