@@ -5,7 +5,7 @@ Nali.extend Collection:
   length:       0
   
   cloning: ->
-    @subscribeTo @Model, "create.#{ @model.sysname.lowercase() }", @onModelCreated
+    @subscribeTo @Model, "create.#{ @model._name.lowercase() }", @onModelCreated
     @adaptations = []
     @ordering    = {}
     @adaptCollection()
@@ -16,7 +16,7 @@ Nali.extend Collection:
     @
   
   onModelUpdated: ( model ) ->
-    @remove model unless model.isCorrect @filters
+    if model.isCorrect @filters then @reorder() else @remove model 
     @
   
   onModelDestroyed: ( model ) ->
@@ -78,16 +78,19 @@ Nali.extend Collection:
     if @ordering.by?
       clearTimeout @ordering.timer if @ordering.timer?
       @ordering.timer = setTimeout =>
-        @sort ( one, two ) =>
-          one = one[ @ordering.by ]
-          two = two[ @ordering.by ]
-          if @ordering.as is 'number'
-            one = parseFloat one
-            two = parseFloat two
-          if @ordering.as is 'string'
-            one = one + ''
-            two = two + ''
-          ( if one > two then 1 else if one < two then -1 else 0 ) * ( if @ordering.desc then -1 else 1 )
+        if typeof @ordering.by is 'function'
+          @sort @ordering.by
+        else
+          @sort ( one, two ) =>
+            one = one[ @ordering.by ]
+            two = two[ @ordering.by ]
+            if @ordering.as is 'number'
+              one = + one
+              two = + two
+            if @ordering.as is 'string'
+              one = '' + one
+              two = '' + two
+            ( if one > two then 1 else if one < two then -1 else 0 ) * ( if @ordering.desc then -1 else 1 )
         @orderViews()
         delete @ordering.timer
       , 5

@@ -1,9 +1,9 @@
 Nali.extend Controller:
 
   extension: ->
-    if @sysname isnt 'Controller'
+    if @_name isnt 'Controller'
       @prepareActions() 
-      @modelSysname = @sysname.replace /s$/, '' 
+      @modelSysname = @_name.replace /s$/, '' 
     @
   
   actions: {}
@@ -70,7 +70,7 @@ Nali.extend Controller:
       
   changeUrl: ( action, filters ) ->
     params   = ( value for own key, value of filters )
-    url      = @sysname.lowercase().replace /s$/, ''
+    url      = @_name.lowercase().replace /s$/, ''
     url     += if action is @actions.default then '' else '/' + action
     url     += '/' + params.join '/' if params.length     
     @Router.setUrl url

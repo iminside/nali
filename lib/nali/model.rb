@@ -34,7 +34,7 @@ module Nali
           end
         end
         params[ :attributes ] = attributes
-        params[ :sysname ]    = self.class.name
+        params[ :_name ]      = self.class.name
         params[ :created ]    = self.created_at.to_f
         params[ :updated ]    = self.updated_at.to_f
         params[ :destroyed ]  = self.destroyed?

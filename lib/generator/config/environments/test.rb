@@ -1,5 +1,7 @@
 Nali::Application.configure :test do |config|
   
+# ActiveRecord::Base.logger    = false
+  
 # config.assets_digest = true
   
 # config.assets_debug = true

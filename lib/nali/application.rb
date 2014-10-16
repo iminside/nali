@@ -41,10 +41,17 @@ module Nali
       content_type asset.content_type
       params[ :body ] ? asset.body : asset
     end
+    
+    require File.join( root, 'config/routes' )
 
     get '/*' do
       if !request.websocket?
-        settings.assets[ 'application.html' ]
+        compiled_path = File.join settings.public_folder, 'assets/application.html' 
+        if settings.environment != :development and File.exists?( compiled_path )
+          send_file compiled_path
+        else
+          settings.assets[ 'application.html' ]
+        end
       else
         request.websocket do |client|
           client.onopen    { Nali::Clients.on_client_connected client }
@@ -66,18 +73,17 @@ module Nali
       Dir[ File.join( root, 'lib/*/**/*.rb' ) ].each { |file| require( file ) }
       Dir[ File.join( root, 'app/**/*.rb'   ) ].each { |file| require( file ) }
       require File.join( root, 'config/application' )
+      require File.join( root, 'config/clients' )
+      Dir[ File.join( root, 'config/initializers/**/*.rb'   ) ].each { |file| require( file ) }
       self
     end
     
     def self.tasks
       initialize!
+      require 'rake/tasklib'
       require 'sinatra/activerecord/rake'
-      require 'rake/sprocketstask'
-      Rake::SprocketsTask.new do |task|
-        task.environment = settings.assets
-        task.output      = File.join( public_folder, 'assets' )
-        task.assets      = %w( application.html application.js application.css )
-      end
+      require 'nali/tasks'
+      Nali::Tasks.new 
     end
       
   end  

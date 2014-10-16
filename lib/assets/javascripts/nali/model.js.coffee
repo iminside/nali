@@ -1,8 +1,8 @@
 Nali.extend Model:
   
   extension: ->
-    if @sysname isnt 'Model'
-      @table       = @tables[ @sysname ] ?= []
+    if @_name isnt 'Model'
+      @table       = @tables[ @_name ] ?= []
       @table.index = {}
       @adapt()
     @
@@ -53,20 +53,20 @@ Nali.extend Model:
   save: ( success, failure ) ->
     # отправляет на сервер запрос на сохранение модели, вызывает success в случае успеха и failure при неудаче
     if @isValid()
-      @query "#{ @sysname.lowercase() }s.save", @attributes, 
+      @query "#{ @_name.lowercase() }s.save", @attributes, 
         ( { attributes, created, updated } ) =>
           @update( attributes, updated, created ).write()
           success? @
     else failure? @
     @
   
-  sync: ( { sysname, attributes, created, updated, destroyed } ) ->
+  sync: ( { _name, attributes, created, updated, destroyed } ) ->
     # синхронизирует пришедшую с сервера модель с локальной, либо создает новую
-    if model = @extensions[ sysname ].find attributes.id 
+    if model = @extensions[ _name ].find attributes.id 
       if destroyed then model.remove()
       else model.update attributes, updated, created
     else
-      model = @extensions[ sysname ].build attributes
+      model = @extensions[ _name ].build attributes
       model.updated = updated
       model.created = created
       model.write()
@@ -74,7 +74,7 @@ Nali.extend Model:
     
   select: ( filters, success, failure ) ->
     # отправляет на сервер запрос на выборку моделей по фильтру, вызывает success в случае успеха и failure при неудаче
-    @query @sysname.lowercase() + 's.select', filters, success, failure if Object.keys( filters ).length
+    @query @_name.lowercase() + 's.select', filters, success, failure if Object.keys( filters ).length
   
   write: ->
     # добавляет модель во временную таблицу, генерирует событие create
@@ -82,7 +82,7 @@ Nali.extend Model:
       @table.push @ 
       @table.index[ @id ] = @
       @onCreate?()
-      @Model.trigger "create.#{ @sysname.lowercase() }", @
+      @Model.trigger "create.#{ @_name.lowercase() }", @
       @Model.runNotices()
     @
     
@@ -128,7 +128,7 @@ Nali.extend Model:
     
   destroy: ( success, failure ) ->
     # отправляет на сервер запрос на удаление модели, вызывает success в случае успеха и failure при неудаче
-    @query @sysname.lowercase() + 's.destroy', @attributes, success, failure
+    @query @_name.lowercase() + 's.destroy', @attributes, success, failure
   
   # поиск моделей
   
@@ -164,7 +164,7 @@ Nali.extend Model:
     # т.е. строка '123' становится числом 123, '123.5' становится 123.5, а '123abc' остается строкой
     if typeof value is 'string'
       value = "#{ value }".trim()
-      if value is ( ( correct = parseFloat( value ) ) + '' ) then correct else value
+      if value is ( ( correct = + value ) + '' ) then correct else value
     else value
 
   isCorrect: ( filters = {} ) ->
@@ -179,11 +179,11 @@ Nali.extend Model:
     if filter instanceof RegExp
       filter.test attribute
     else if typeof filter is 'string'
-      attribute.toString() is filter
+      '' + attribute is filter
     else if typeof filter is 'number'
-      parseInt( attribute ) is filter
+      + attribute is filter
     else if filter instanceof Array
-      attribute.toString() in filter or parseInt( attribute ) in filter
+      '' + attribute in filter or + attribute in filter
     else false 
     
   # работа со связями 
@@ -206,7 +206,7 @@ Nali.extend Model:
     # устанавливает геттер типа has_one возвращающий связанную модель
     @getter name, => 
       delete @[ name ]
-      ( filters = {} )[ "#{ @sysname.lowercase() }_id" ] = @id
+      ( filters = {} )[ "#{ @_name.lowercase() }_id" ] = @id
       relation = @Model.extensions[ name.capitalize() ].where filters
       @getter name, => relation.first()
       relation.first()
@@ -216,7 +216,7 @@ Nali.extend Model:
     # устанавливает геттер типа has_many возвращающий коллекцию связанных моделей
     @getter name, => 
       delete @[ name ]
-      ( filters = {} )[ "#{ @sysname.lowercase() }_id" ] = @id
+      ( filters = {} )[ "#{ @_name.lowercase() }_id" ] = @id
       @[ name ] = @Model.extensions[ name[ ...-1 ].capitalize() ].where filters
     @     
   
@@ -224,7 +224,7 @@ Nali.extend Model:
   
   view: ( name ) ->
     # приводит сокращенное имя к полному и возвращает объект вида, либо новый, либо ранее созданный
-    name = @sysname + name.camelcase().capitalize() unless @View.extensions[ name ]?
+    name = @_name + name.camelcase().capitalize() unless @View.extensions[ name ]?
     unless ( view = ( @views ?= {} )[ name ] )?
       if ( view = @View.extensions[ name ] )? 
         view = ( ( @views ?= {} )[ name ] = view.clone( model: @ ) )

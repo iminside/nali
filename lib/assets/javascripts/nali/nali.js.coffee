@@ -1,6 +1,6 @@
 window.Nali = 
   
-  sysname:    'Nali'
+  _name:    'Nali'
   extensions: {}    
   
   starting: ->
@@ -10,21 +10,23 @@ window.Nali =
       @starting.call extension
     @
   
-  extend: ( obj ) ->
-    sysname                 = Object.keys( obj )[0]
-    @[ sysname ]            = @extensions[ sysname ] = obj[ sysname ]
-    @[ sysname ].extensions = {}
-    @[ sysname ].sysname    = sysname
-    @[ sysname ].__proto__  = @
-    @[ sysname ]         :: = @
-    @[ sysname ].initObservation()
-    @[ sysname ]
+  extend: ( params ) ->
+    for name, param of params
+      param._name          = name
+      @[ name ]            = @extensions[ name ] = @child param
+      @[ name ].extensions = {}
+      @[ name ].initObservation()
     
-  clone: ( obj = {} ) ->
-    obj.__proto__ = @
-    obj        :: = @
-    obj.initObservation()
+  clone: ( params = {} ) ->
+    obj = @child params
     obj.cloning?()
+    obj
+    
+  child: ( params ) ->
+    obj         = Object.create @
+    obj      :: = @
+    obj[ name ] = value for name, value of params
+    obj.initObservation()
     obj
   
   expand: ( obj ) ->
@@ -42,8 +44,8 @@ window.Nali =
       return false unless @::?
       return true  if     @:: is parent
     else
-      return false unless @::?.sysname?
-      return true  if     @::sysname is parent
+      return false unless @::?._name?
+      return true  if     @::_name is parent
     @::childOf parent
     
   runExtensions: ( context = @ ) ->

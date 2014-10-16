@@ -1,7 +1,7 @@
 Nali.extend View:
   
   extension: ->
-    if @sysname isnt 'View'
+    if @_name isnt 'View'
       @parseTemplate()
       @parseEvents() 
     @ 
@@ -25,33 +25,35 @@ Nali.extend View:
     else @Application.htmlContainer
   
   draw: ->
-    assistant.call @ for assistant in @assistants
+    @runAssistants 'draw'
     @onDraw?()
     @
     
   show: ( insertTo = @insertTo() ) ->
     @prepareElement().draw().bindEvents()
     unless @visible
-      @model.beforeShow?[ @sysname ]?.call @model
+      @model.beforeShow?[ @_name ]?.call @model
+      @runAssistants 'show'
       @subscribeTo @model, 'update',  @onSourceUpdated
       @subscribeTo @model, 'destroy', @onSourceDestroyed
       @element.appendTo insertTo
       @showRelations()
       setTimeout ( => @onShow() ), 5 if @onShow?
       @visible = true
-      @model.afterShow?[ @sysname ]?.call @model
+      @model.afterShow?[ @_name ]?.call @model
     @
           
   hide: ( delay = 0 ) ->
     if @visible
-      @model.beforeHide?[ @sysname ]?.call @model
+      @model.beforeHide?[ @_name ]?.call @model
       @hideDelay = delay if typeof( delay ) is 'number' and delay
       @onHide?()
       @trigger 'hide'
+      @runAssistants 'hide'
       @hideElement()
       @destroyObservation()
       @visible = false
-      @model.afterHide?[ @sysname ]?.call @model
+      @model.afterHide?[ @_name ]?.call @model
     @
     
   hideElement: ->
@@ -152,15 +154,15 @@ Nali.extend View:
     node  
     
   parseTemplate: ->
-    if container = document.querySelector '#' + @sysname.underscore() 
+    if container = document.querySelector '#' + @_name.underscore() 
       @template = container.innerHTML.trim().replace( /\s+/g, ' ' )
         .replace( /({\s*\+.+?\s*})/g, ' <assist>$1</assist>' )
         .replace( /{\s*yield\s*}/g, '<div class="yield"></div>' )
-      unless RegExp( "^<[^>]+" + @sysname ).test @template
-        @template = "<div class=\"#{ @sysname }\">#{ @template }</div>"
+      unless RegExp( "^<[^>]+" + @_name ).test @template
+        @template = "<div class=\"#{ @_name }\">#{ @template }</div>"
       @parseRelations()
       container.parentNode.removeChild container
-    else console.warn 'Template %s not exists', @sysname
+    else console.warn 'Template %s not exists', @_name
     @
   
   parseRelations: ->
@@ -196,18 +198,22 @@ Nali.extend View:
     @
   
   addAssistants: ->
-    @assistants = []
+    @assistants = show: [], draw: [], hide: []
     @[ "add#{ type }Assistant" ] @getNode nodepath for { nodepath, type } in @assistantsMap
+    @
+    
+  runAssistants: ( type ) ->
+    assistant.call @ for assistant in @assistants[ type ]
     @
       
   addTextAssistant: ( node ) ->
     initialValue = node.textContent
-    @assistants.push -> node.textContent = @analize initialValue
+    @assistants[ 'draw' ].push -> node.textContent = @analize initialValue
     @
     
   addAttrAssistant: ( node ) ->
     initialValue = node.value
-    @assistants.push -> node.value = @analize initialValue
+    @assistants[ 'draw' ].push -> node.value = @analize initialValue
     @
     
   addHtmlAssistant: ( node ) ->
@@ -216,7 +222,7 @@ Nali.extend View:
     index        = Array::indexOf.call parent.childNodes, node
     after        = parent.childNodes[ index - 1 ] or null
     before       = parent.childNodes[ index + 1 ] or null
-    @assistants.push ->
+    @assistants[ 'draw' ].push ->
       start = if after  then Array::indexOf.call( parent.childNodes, after ) + 1 else 0
       end   = if before then Array::indexOf.call parent.childNodes, before  else parent.childNodes.length
       parent.removeChild node for node in Array::slice.call( parent.childNodes, start, end )
@@ -226,41 +232,38 @@ Nali.extend View:
   addFormAssistant: ( node ) ->
     if bind = @analizeChain node.attributes.removeNamedItem( 'bind' ).value
       [ source, property ] = bind
-      if node.type in [ 'text', 'textarea']
-        node.value = source[ property ]
-        
-        @_( node ).on 'change', => 
-          ( params = {} )[ property ] = node.value
-          source.update params
-          source.save() unless node.form?
-        
-        source.subscribe @, "update.#{ property }", =>
-          node.value = source[ property ] if node.value isnt source[ property ]
-        
-      if node.type in [ 'checkbox', 'radio' ]
-        node.checked = source[ property ] + '' is node.value
-        
-        @_( node ).on 'change', => 
-          if node.checked is true
-            ( params = {} )[ property ] = node.value
-            source.update params
-            source.save() unless node.form?
-              
-        source.subscribe @, "update.#{ property }", =>
-          node.checked = source[ property ] + '' is node.value
+      _node = @_ node
       
-      if node.type is 'select-one'
-        option.selected = true for option in node when source[ property ] + '' is option.value
-        
-        @_( node ).on 'change', => 
-          ( params = {} )[ property ] = node.value
-          source.update params
-          source.save() unless node.form?
-              
-        source.subscribe @, "update.#{ property }", =>
-          option.selected = true for option in node when source[ property ] + '' is option.value
+      updateSource = ->
+        ( params = {} )[ property ] = node.value
+        source.update params
+        source.save() unless node.form?
+      
+      [ setValue, bindChange ] = switch
+        when node.type in [ 'text', 'textarea']
+          [
+            -> node.value = source[ property ]
+            -> _node.on 'change', => updateSource.call @
+          ]
+        when node.type in [ 'checkbox', 'radio' ]
+          [
+            -> node.checked = source[ property ] + '' is node.value
+            -> _node.on 'change', => updateSource.call @ if node.checked is true 
+          ]
+        when node.type is 'select-one'
+          [
+            -> option.selected = true for option in node when source[ property ] + '' is option.value
+            -> _node.on 'change', => updateSource.call @
+          ]
+          
+      @assistants[ 'show' ].push ->
+        setValue.call @
+        bindChange.call @
+        source.subscribe @, "update.#{ property }", => setValue.call @
+
+      @assistants[ 'hide' ].push ->
+        _node.off 'change'
     @
-        
         
   analize: ( value ) ->
     value.replace /{\s*(.+?)\s*}/g, ( match, sub ) => @analizeMatch sub
@@ -286,6 +289,6 @@ Nali.extend View:
       if segment of source then source = source[ segment ]
       else break
     unless property of source
-      console.warn "%s: chain \"%s\" is invalid, \"%s\" is not Object", @sysname, chain, segment
+      console.warn "%s: chain \"%s\" is invalid, \"%s\" is not Object", @_name, chain, segment
       return null
     [ source, property ]

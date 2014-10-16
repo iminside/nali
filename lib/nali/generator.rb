@@ -20,13 +20,14 @@ module Nali
       target_path = File.join( Dir.pwd, name )
       FileUtils.cp_r source_path, target_path
       dirs = []
-      dirs << File.join( target_path, "app/controllers" )
-      dirs << File.join( target_path, "db" )
-      dirs << File.join( target_path, "db/migrate" )
-      dirs << File.join( target_path, "lib" )
-      dirs << File.join( target_path, "public" )
-      dirs << File.join( target_path, "tmp" )
-      dirs << File.join( target_path, "vendor" )
+      dirs << File.join( target_path, 'app/controllers' )
+      dirs << File.join( target_path, 'db' )
+      dirs << File.join( target_path, 'db/migrate' )
+      dirs << File.join( target_path, 'lib' )
+      dirs << File.join( target_path, 'public' )
+      dirs << File.join( target_path, 'tmp' )
+      dirs << File.join( target_path, 'vendor' )
+      dirs << File.join( target_path, 'config/initializers' )
       dirs.each { |path| Dir.mkdir( path ) unless Dir.exists?( path ) }
       puts "Application #{ name } created"
     end
