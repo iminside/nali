@@ -20,16 +20,15 @@ Nali.extend Router:
   scanRoutes: ->
     for name, controller of @Controller.extensions when controller.actions?
       route  = '^'
-      route += name.lowercase().replace /s$/, ''
+      route += name.lowercase().replace /s$/, 's*(\/|$)'
       route += '('
-      route += Object.keys( controller.routedActions ).join '|' 
+      route += Object.keys( controller._actions ).join '|' 
       route += ')?'
       @routes[ route ] = controller
     @
     
   go: ( url = window.location.pathname, options = {} ) ->
-    url = @prepare( url ) or @prepare( @Application.defaultUrl )
-    if found = @findRoute url
+    if found = @findRoute @prepare( url ) or @prepare( @Application.defaultUrl )
       { controller, action, filters, params } = found
       params[ name ] = value for name, value in options
       controller.run action, filters, params
@@ -46,29 +45,30 @@ Nali.extend Router:
         
   findRoute: ( url ) ->
     for route, controller of @routes when match = url.match new RegExp route, 'i'
-      segments = url.split( '/' )[ 1... ]
-      if segments[0] in Object.keys( controller.routedActions ) 
+      segments = ( @routedUrl = url ).split( '/' )[ 1... ]
+      if segments[0] in Object.keys( controller._actions ) 
         action = segments.shift() 
       else unless action = controller.actions.default 
         console.error 'Unspecified controller action'
       filters = {}
-      for name in controller.routedActions[ action ].filters when segments[0]?
+      for name in controller._actions[ action ].filters when segments[0]?
         filters[ name ] = segments.shift() 
       params = {}
-      for name in controller.routedActions[ action ].params when segments[0]?
+      for name in controller._actions[ action ].params when segments[0]?
         params[ name ] = segments.shift() 
       return controller: controller, action: action, filters: filters, params: params
     false
   
   saveHistory: ( value ) ->
-    @saveHistorySwitcher ?= true
+    @_saveHistory ?= true
     if value in [ true, false ]
-      @saveHistorySwitcher = value
+      @_saveHistory = value
       @
-    else @saveHistorySwitcher
-  
-  setUrl: ( url ) ->
+    else @_saveHistory
+    
+  setUrl: ( url = null ) ->
     if @saveHistory()
-      history.pushState null, null, '/' + ( @url = url ) if url isnt @url 
+      @routedUrl = url if url?
+      history.pushState null, null, '/' + ( @url = @routedUrl ) if @routedUrl isnt @url 
     else @saveHistory true
     @

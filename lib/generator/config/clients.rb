@@ -2,15 +2,15 @@ module Nali
   
   module Clients
 
-    def self.client_connected( client )
+    def client_connected( client )
       
     end
     
-    def self.on_message( client, message )
+    def on_message( client, message )
       
     end
     
-    def self.client_disconnected( client )
+    def client_disconnected( client )
       
     end
     

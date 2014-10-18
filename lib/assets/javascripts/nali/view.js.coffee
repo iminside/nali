@@ -2,6 +2,7 @@ Nali.extend View:
   
   extension: ->
     if @_name isnt 'View'
+      @_shortName = @_name.underscore().split( '_' )[ 1.. ].join '_'
       @parseTemplate()
       @parseEvents() 
     @ 
@@ -32,7 +33,7 @@ Nali.extend View:
   show: ( insertTo = @insertTo() ) ->
     @prepareElement().draw().bindEvents()
     unless @visible
-      @model.beforeShow?[ @_name ]?.call @model
+      @runModelCallback 'beforeShow'
       @runAssistants 'show'
       @subscribeTo @model, 'update',  @onSourceUpdated
       @subscribeTo @model, 'destroy', @onSourceDestroyed
@@ -40,12 +41,12 @@ Nali.extend View:
       @showRelations()
       setTimeout ( => @onShow() ), 5 if @onShow?
       @visible = true
-      @model.afterShow?[ @_name ]?.call @model
+      @runModelCallback 'afterShow'
     @
           
   hide: ( delay = 0 ) ->
     if @visible
-      @model.beforeHide?[ @_name ]?.call @model
+      @runModelCallback 'beforeHide'
       @hideDelay = delay if typeof( delay ) is 'number' and delay
       @onHide?()
       @trigger 'hide'
@@ -53,7 +54,7 @@ Nali.extend View:
       @hideElement()
       @destroyObservation()
       @visible = false
-      @model.afterHide?[ @_name ]?.call @model
+      @runModelCallback 'afterHide'
     @
     
   hideElement: ->
@@ -62,6 +63,10 @@ Nali.extend View:
   
   removeElement: ->
     @element[0].parentNode.removeChild @element[0]
+    @
+    
+  runModelCallback: ( type ) ->
+    @model[ type ]?[ @_shortName ]?.call @model
     @
     
   showRelations: ->

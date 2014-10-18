@@ -7,8 +7,8 @@ module Sprockets
         arr      = path.split( '/' ).reverse
         id       = arr[1] + '_' + arr[0].split( '.' )[0]
         asset    = environment[ path ]
-        template = asset.body.force_encoding 'UTF-8'
-        result  += %Q(\n<script type=\"text/template\" id=\"#{ id }\">\n#{ template }\n</script>)
+        template = asset.body.force_encoding( 'UTF-8' ).strip.gsub( "\n", "\n      " )
+        result  += %Q(\n    <script type=\"text/template\" id=\"#{ id }\">\n      #{ template }\n    </script>)
         depend_on asset.pathname
       end
       result

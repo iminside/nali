@@ -43,7 +43,7 @@ module Nali
     end
       
     def clients
-      Nali::Clients.clients
+      Nali::Clients.list
     end
     
     def sync( *watches )

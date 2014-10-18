@@ -13,7 +13,7 @@ end
 class String
    
   def underscore!
-    gsub!(/(.)([A-Z])/,'\1_\2')
+    gsub!( /(.)([A-Z])/, '\1_\2' )
     downcase!
   end
 
@@ -21,8 +21,8 @@ class String
     dup.tap { |s| s.underscore! }
   end
   
-  def capitalize_first
-    dup.tap { |s| s[0] = s[0].capitalize }
+  def camelize
+    self.split( '_' ).collect( &:capitalize ).join
   end
   
 end

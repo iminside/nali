@@ -36,13 +36,13 @@ module Nali
         task :clean do
           sprockets_tasks
           Rake::Task[ 'clean_assets' ].invoke
-          puts 'Old compiled assets removed'
+          puts 'Old assets removed'
         end
         
         desc 'Remove all assets'
         task :clobber do
           FileUtils.rm_rf File.join( @settings.root, 'public/assets' )
-          puts 'Compiled assets removed'
+          puts 'All assets removed'
         end
         
         namespace :cache do

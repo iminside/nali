@@ -20,7 +20,6 @@ module Nali
       target_path = File.join( Dir.pwd, name )
       FileUtils.cp_r source_path, target_path
       dirs = []
-      dirs << File.join( target_path, 'app/controllers' )
       dirs << File.join( target_path, 'db' )
       dirs << File.join( target_path, 'db/migrate' )
       dirs << File.join( target_path, 'lib' )
@@ -34,8 +33,11 @@ module Nali
         
     def create_model( name )
       if Dir.exists?( File.join( Dir.pwd, 'app' ) )
-        filename  = name.underscore
-        classname = name.capitalize_first
+        if name.scan( '_' ).size > 0
+          return puts 'Please don\'t use the underscore'
+        end
+        filename  = name.downcase
+        classname = name.camelize
         File.open( File.join( Dir.pwd, "app/assets/javascripts/models/#{ filename }.js.coffee" ), 'w' ) do |f|     
           f.write( "Nali.Model.extend #{ classname }: {}" )   
         end
@@ -48,12 +50,16 @@ module Nali
 
   include Nali::Model
 
+  def access_level( client )
+    :unknown
+  end
+
 end" 
             )
         end
         File.open( File.join( Dir.pwd, "app/controllers/#{ filename }s_controller.rb" ), 'w' ) do |f|     
           f.write( 
-"class #{ classname }sController
+"class #{ classname }sController < ApplicationController
   
   include Nali::Controller
   
@@ -64,9 +70,13 @@ end"
           f.write( 
 "#{ classname }:
   create:
+    unknown:
   read:
+    unknown:
   update:
+    unknown:
   destroy:
+    unknown:
 
 
 " 
@@ -85,23 +95,25 @@ end"
       if Dir.exists?( File.join( Dir.pwd, 'app' ) )
         dirname, *filename = name.underscore.split( '_' )
         filename  = filename.join( '_' )
-        classname = name.capitalize_first
-        dirs = []
-        dirs << File.join( Dir.pwd, "app/assets/javascripts/views/#{ dirname }" )
-        dirs << File.join( Dir.pwd, "app/assets/stylesheets/#{ dirname }" ) 
-        dirs << File.join( Dir.pwd, "app/templates/#{ dirname }" ) 
-        dirs.each { |path| Dir.mkdir( path ) unless Dir.exists?( path ) }
-        File.open( File.join( Dir.pwd, "app/assets/javascripts/views/#{ dirname }/#{ filename }.js.coffee" ), 'w' ) do |f|     
-          f.write( "Nali.View.extend #{ classname }: {}" )   
-        end 
-        File.open( File.join( Dir.pwd, "app/assets/stylesheets/#{ dirname }/#{ filename }.css.sass" ), 'w' ) do |f|     
-          f.write( ".#{ classname }" )
-        end 
-        File.open( File.join( Dir.pwd, "app/templates/#{ dirname }/#{ filename }.html" ), 'w' ) {}
-        FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
-        puts "Created: app/assets/javascripts/views/#{ dirname }/#{ filename }.js.coffee"
-        puts "Created: app/assets/stylesheets/#{ dirname }/#{ filename }.css.sass"
-        puts "Created: app/templates/#{ dirname }/#{ filename }.html"
+        classname = name.underscore.camelize
+        if not dirname.empty? and not filename.empty? and not classname.empty?
+          dirs = []
+          dirs << File.join( Dir.pwd, "app/assets/javascripts/views/#{ dirname }" )
+          dirs << File.join( Dir.pwd, "app/assets/stylesheets/#{ dirname }" ) 
+          dirs << File.join( Dir.pwd, "app/templates/#{ dirname }" ) 
+          dirs.each { |path| Dir.mkdir( path ) unless Dir.exists?( path ) }
+          File.open( File.join( Dir.pwd, "app/assets/javascripts/views/#{ dirname }/#{ filename }.js.coffee" ), 'w' ) do |f|     
+            f.write( "Nali.View.extend #{ classname }: {}" )   
+          end 
+          File.open( File.join( Dir.pwd, "app/assets/stylesheets/#{ dirname }/#{ filename }.css.sass" ), 'w' ) do |f|     
+            f.write( ".#{ classname }" )
+          end 
+          File.open( File.join( Dir.pwd, "app/templates/#{ dirname }/#{ filename }.html" ), 'w' ) {}
+          FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
+          puts "Created: app/assets/javascripts/views/#{ dirname }/#{ filename }.js.coffee"
+          puts "Created: app/assets/stylesheets/#{ dirname }/#{ filename }.css.sass"
+          puts "Created: app/templates/#{ dirname }/#{ filename }.html"
+        else puts 'Invalid view name' end
       else puts 'Please go to the application folder' end
     end    
         

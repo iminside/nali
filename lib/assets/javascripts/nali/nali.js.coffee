@@ -1,6 +1,8 @@
+window.__ = ( args... ) -> console.log args...
+
 window.Nali = 
   
-  _name:    'Nali'
+  _name:      'Nali'
   extensions: {}    
   
   starting: ->
@@ -15,11 +17,10 @@ window.Nali =
       param._name          = name
       @[ name ]            = @extensions[ name ] = @child param
       @[ name ].extensions = {}
-      @[ name ].initObservation()
     
   clone: ( params = {} ) ->
     obj = @child params
-    obj.cloning?()
+    obj.runCloning()
     obj
     
   child: ( params ) ->
@@ -51,6 +52,10 @@ window.Nali =
   runExtensions: ( context = @ ) ->
     @::?.runExtensions context     
     @extension.call context if @hasOwnProperty 'extension'
+      
+  runCloning: ( context = @ ) ->
+    @::?.runCloning context     
+    @cloning.call context if @hasOwnProperty 'cloning'
     
   getter: ( property, callback ) ->
     @__defineGetter__ property, callback
@@ -68,8 +73,8 @@ window.Nali =
     @
 
   initObservation: ->
-    @observers   = [] unless @hasOwnProperty 'observers'
-    @observables = [] unless @hasOwnProperty 'observables'
+    @observers   = []
+    @observables = []
     @
     
   destroyObservation: ->

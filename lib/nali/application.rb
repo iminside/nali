@@ -43,6 +43,8 @@ module Nali
     end
     
     require File.join( root, 'config/routes' )
+    
+    include Nali::Clients
 
     get '/*' do
       if !request.websocket?
@@ -54,9 +56,9 @@ module Nali
         end
       else
         request.websocket do |client|
-          client.onopen    { Nali::Clients.on_client_connected client }
-          client.onmessage { |message| Nali::Clients.on_received_message( client, JSON.parse( message ).keys_to_sym! ) }
-          client.onclose   { Nali::Clients.on_client_disconnected client }
+          client.onopen    { on_client_connected client }
+          client.onmessage { |message| on_received_message( client, JSON.parse( message ).keys_to_sym! ) }
+          client.onclose   { on_client_disconnected client }
         end
       end
     end
@@ -71,6 +73,7 @@ module Nali
     
     def self.initialize!
       Dir[ File.join( root, 'lib/*/**/*.rb' ) ].each { |file| require( file ) }
+      require File.join( root, 'app/controllers/application_controller.rb' )
       Dir[ File.join( root, 'app/**/*.rb'   ) ].each { |file| require( file ) }
       require File.join( root, 'config/application' )
       require File.join( root, 'config/clients' )

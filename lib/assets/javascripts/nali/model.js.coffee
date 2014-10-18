@@ -6,6 +6,9 @@ Nali.extend Model:
       @table.index = {}
       @adapt()
     @
+    
+  cloning: ->
+    @views = {}
   
   tables:      {}
   hasOne:      []
@@ -19,6 +22,18 @@ Nali.extend Model:
       do ( name, method ) =>
         if typeof method is 'function'
           @[ name[ 1.. ] ] = ( args... ) -> @[ name ] args...
+    @adaptViews()
+    @
+    
+  adaptViews: ->
+    @views = {}
+    for name, view of @View.extensions when name.indexOf( @_name ) >= 0
+      do ( name, view ) =>
+        @views[ short = view._shortName ] = view
+        unless @[ short ]?
+          @[ short ] = ->
+            @show short
+            @
     @
     
   notice: ( params ) ->
@@ -223,11 +238,10 @@ Nali.extend Model:
   # работа с видами
   
   view: ( name ) ->
-    # приводит сокращенное имя к полному и возвращает объект вида, либо новый, либо ранее созданный
-    name = @_name + name.camelcase().capitalize() unless @View.extensions[ name ]?
-    unless ( view = ( @views ?= {} )[ name ] )?
-      if ( view = @View.extensions[ name ] )? 
-        view = ( ( @views ?= {} )[ name ] = view.clone( model: @ ) )
+    # возвращает объект вида, либо новый, либо ранее созданный
+    unless ( view = @views[ name ] )?
+      if ( view = @::views[ name ] )? 
+        view = @views[ name ] = view.clone model: @ 
       else console.error "View %s of model %O does not exist", name, @
     view
           
@@ -236,12 +250,12 @@ Nali.extend Model:
     # вставка произойдет в элемент указанный в самом виде либо в элемент приложения )
     # функция возвращает объект вида при успехе либо null при неудаче
     if ( view = @view( name ) )? then view.show insertTo else null 
-      
+    
   hide: ( name ) ->
     # удаляет html-код вида со страницы
     # функция возвращает объект вида при успехе либо null при неудаче
     if ( view = @view( name ) )? then view.hide() else null    
-      
+    
   # валидации
   
   validations:          
