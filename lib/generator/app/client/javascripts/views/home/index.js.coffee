@@ -1,1 +1,9 @@
-Nali.View.extend HomeIndex: {}
+Nali.View.extend HomeIndex:
+
+  events:  []
+
+  helpers: {}
+
+  onShow:  ->
+
+  onHide:  ->
