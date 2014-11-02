@@ -2,12 +2,12 @@ Nali::Application.configure :test do |config|
   
 # ActiveRecord::Base.logger    = false
   
-# config.client_digest = true
+# config.client_digest         = true
   
-# config.client_debug = true
+# config.client_debug          = true
   
-# config.client.js_compressor  = Uglifier.new( mangle: true )
+# config.client.js_compressor  = :uglify
   
-# config.client.css_compressor = YUI::CssCompressor.new
+# config.client.css_compressor = :scss
   
 end
