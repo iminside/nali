@@ -47,6 +47,10 @@ module EventMachine
       def watch( model )
         watches[ model.class.name + model.id.to_s ] ||= 0
       end
+
+      def unwatch( model )
+        watches.delete model.class.name + model.id.to_s
+      end
         
       def watch?( model )
         if watches[ model.class.name + model.id.to_s ] then true else false end
@@ -67,7 +71,7 @@ module EventMachine
       def sync( model )
         params, relations = model.get_sync_params( self )
         if not params.empty? and ( watch_time( model ) < model.updated_at.to_f or model.destroyed? )
-          watch_time_up model
+          if model.destroyed? then unwatch( model ) else watch_time_up model end
           relations.each { |relation| sync relation }
           send_json action: :sync, params: params 
         end

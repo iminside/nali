@@ -3,10 +3,11 @@ Nali.extend Controller:
   extension: ->
     if @_name isnt 'Controller'
       @prepareActions() 
-      @modelSysname = @_name.replace /s$/, '' 
+      @modelName = @_name.replace /s$/, ''
     @
   
-  actions: {}
+  new: ( collection, filters, params ) ->
+    @clone collection: collection, filters: filters, params: params
   
   prepareActions: ->
     @_actions = {}
@@ -22,13 +23,13 @@ Nali.extend Controller:
     @ 
     
   prepareBefores: ->
-    if @actions.before?
+    if @actions?.before?
       list = @analizeFilters 'before'  
       @_actions[ name ].methods = actions.concat @_actions[ name ].methods for name, actions of list
     @
     
   prepareAfters: ->
-    if @actions.after?
+    if @actions?.after?
       list = @analizeFilters 'after'  
       @_actions[ name ].methods = @_actions[ name ].methods.concat actions for name, actions of list
     @
@@ -45,10 +46,8 @@ Nali.extend Controller:
     list
     
   run: ( action, filters, params ) ->
-    controller = @clone 
-      collection: @Model.extensions[ @modelSysname ].where filters 
-      params:     params
-    controller.runAction action
+    collection = @Model.extensions[ @modelName ].where filters
+    controller = @new( collection, filters, params ).runAction action
     if controller.stopped
       controller.collection.destroy()
     else

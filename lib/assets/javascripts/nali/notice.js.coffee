@@ -1,14 +1,29 @@
-Nali.Model.extend Notice:        
-  initialize:         -> @::::Notice = @
-  info:    ( params ) -> @build( params ).show 'info'
-  warning: ( params ) -> @build( params ).show 'warning'
-  error:   ( params ) -> @build( params ).show 'error'
+Nali.Model.extend Notice:
 
-Nali.View.extend NoticeInfo: 
-  onShow: -> @hide 3000
+  initialize: ->
+    @::::expand Notice: @
 
-Nali.View.extend NoticeWarning: 
-  onShow: -> @hide 3000
+  prepare: ( params ) ->
+    params = message: params if typeof params is 'string'
+    params
+
+  info: ( params ) ->
+    @new( @prepare params ).show 'info'
+
+  warning: ( params ) ->
+    @new( @prepare params ).show 'warning'
+
+  error:   ( params ) ->
+    @new( @prepare params ).show 'error'
+
+
+Nali.View.extend
+
+  NoticeInfo:
+    onShow: -> @hide 3000
+
+  NoticeWarning:
+    onShow: -> @hide 3000
     
-Nali.View.extend NoticeError:   
-  onShow: -> @hide 3000
+  NoticeError:
+    onShow: -> @hide 3000

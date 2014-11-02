@@ -48,11 +48,11 @@ module Nali
 
     get '/*' do
       if !request.websocket?
-        compiled_path = File.join settings.public_folder, 'assets/application.html' 
+        compiled_path = File.join settings.public_folder, 'index.html'
         if settings.environment != :development and File.exists?( compiled_path )
           send_file compiled_path
         else
-          settings.assets[ 'application.html' ]
+          settings.assets[ 'index.html' ]
         end
       else
         request.websocket do |client|

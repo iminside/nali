@@ -5,18 +5,24 @@ Nali.extend Collection:
   length:       0
   
   cloning: ->
-    @subscribeTo @Model, "create.#{ @model._name.lowercase() }", @onModelCreated
+    @subscribeTo @Model, "create.#{ @model._name.lower() }", @onModelCreated
     @adaptations = []
     @ordering    = {}
     @adaptCollection()
     @
 
-  onModelCreated: ( model ) ->
+  new: ( model, filters ) ->
+    @clone model: model, filters: filters
+
+  onModelCreated: ( extModel, model ) ->
     @add model if model.isCorrect @filters
     @
   
   onModelUpdated: ( model ) ->
-    if model.isCorrect @filters then @reorder() else @remove model 
+    if model.isCorrect @filters
+      @reorder()
+      @trigger 'update.model', model
+    else @remove model
     @
   
   onModelDestroyed: ( model ) ->
@@ -46,8 +52,8 @@ Nali.extend Collection:
     @subscribeTo model, 'destroy', @onModelDestroyed
     @subscribeTo model, 'update',  @onModelUpdated
     @reorder()
-    @trigger 'update'
-    @trigger 'update.length'
+    @trigger 'update.length.add', model
+    @trigger 'update.length', 'add', model
     @
     
   indexOf: ( model ) ->
@@ -55,10 +61,10 @@ Nali.extend Collection:
   
   remove: ( model ) ->
     Array::splice.call @, @indexOf( model ), 1  
-    @unsubscribeTo model
+    @unsubscribeFrom model
     @reorder()
-    @trigger 'update'
-    @trigger 'update.length'
+    @trigger 'update.length.remove', model
+    @trigger 'update.length', 'remove', model
     @
     
   removeAll: ->

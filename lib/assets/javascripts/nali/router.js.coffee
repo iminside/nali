@@ -1,8 +1,7 @@
 Nali.extend Router:
 
   initialize: ->
-    @subscribeTo @Connection, 'open', @start
-    @::redirect = ( args... ) => @go args... 
+    @::expand redirect: ( args... ) => @go args...
     @    
   
   routes:      {}
@@ -14,13 +13,12 @@ Nali.extend Router:
       event.stopPropagation()
       @saveHistory false
       @go event.target.location.pathname
-    @go()
     @
 
   scanRoutes: ->
     for name, controller of @Controller.extensions when controller.actions?
       route  = '^'
-      route += name.lowercase().replace /s$/, 's*(\/|$)'
+      route += name.lower().replace /s$/, 's*(\/|$)'
       route += '('
       route += Object.keys( controller._actions ).join '|' 
       route += ')?'
@@ -54,8 +52,8 @@ Nali.extend Router:
       for name in controller._actions[ action ].filters when segments[0]?
         filters[ name ] = segments.shift() 
       params = {}
-      for name in controller._actions[ action ].params when segments[0]?
-        params[ name ] = segments.shift() 
+      for name in controller._actions[ action ].params
+        params[ name ] = if segments[0]? then segments.shift() else null
       return controller: controller, action: action, filters: filters, params: params
     false
   

@@ -2,8 +2,15 @@ module Nali
 
   module Model
 
+    def self.included( base )
+      base.extend self
+      base.class_eval do
+        after_destroy { sync }
+      end
+    end
+
     def access_level( client )
-      :default
+      :unknown
     end
     
     def access_action( action, client )
@@ -18,28 +25,35 @@ module Nali
     def get_sync_params( client )
       params    = {}
       relations = []
-      access_action( :read, client ) do |options|
-        attributes = { id: self.id }
-        options.each do |option| 
-          if self.respond_to?( option )
-            value = self.send( option )
-            if value.is_a?( ActiveRecord::Associations::CollectionProxy )
-              relations << value unless self.destroyed?
-            elsif value.is_a?( ActiveRecord::Base )
-              relations << value unless self.destroyed?
-              attributes[ option.to_s + '_id' ] = value.id
-            else
-              attributes[ option ] = value
+      if self.destroyed?
+        sync_initial params
+        params[ :destroyed ] = true
+      else
+        access_action( :read, client ) do |options|
+          sync_initial params
+          options.each do |option|
+            if self.respond_to?( option )
+              value = self.send option
+              if value.is_a?( ActiveRecord::Associations::CollectionProxy )
+                relations << value
+              elsif value.is_a?( ActiveRecord::Base )
+                relations << value
+                params[ :attributes ][ option.to_s + '_id' ] = value.id
+              else
+                params[ :attributes ][ option ] = value
+              end
             end
           end
+          params[ :created ] = self.created_at.to_f
+          params[ :updated ] = self.updated_at.to_f
         end
-        params[ :attributes ] = attributes
-        params[ :_name ]      = self.class.name
-        params[ :created ]    = self.created_at.to_f
-        params[ :updated ]    = self.updated_at.to_f
-        params[ :destroyed ]  = self.destroyed?
       end
       [ params, relations.flatten.compact ]
+    end
+
+    def sync_initial( params )
+      params[ :_name ]      = self.class.name
+      params[ :attributes ] = { id: self.id }
     end
       
     def clients

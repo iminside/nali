@@ -29,7 +29,7 @@ module Nali
     end
     
     def save
-      params[ :id ] ? update : create
+      params[ :id ].to_i.to_s == params[ :id ].to_s ? update : create
     end
     
     def create

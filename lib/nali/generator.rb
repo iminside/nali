@@ -39,10 +39,18 @@ module Nali
         filename  = name.downcase
         classname = name.camelize
         File.open( File.join( Dir.pwd, "app/assets/javascripts/models/#{ filename }.js.coffee" ), 'w' ) do |f|     
-          f.write( "Nali.Model.extend #{ classname }: {}" )   
+          f.write(
+"Nali.Model.extend #{ classname }:
+
+  attributes: {}"
+            )
         end
         File.open( File.join( Dir.pwd, "app/assets/javascripts/controllers/#{ filename }s.js.coffee" ), 'w' ) do |f|     
-          f.write( "Nali.Controller.extend #{ classname }s: {}" )   
+          f.write(
+"Nali.Controller.extend #{ classname }s:
+
+  actions: {}"
+            )
         end
         File.open( File.join( Dir.pwd, "app/models/#{ filename }.rb" ), 'w' ) do |f|     
           f.write( 
@@ -68,16 +76,13 @@ end"
         end
         File.open( File.join( Dir.pwd, "app/models/access.yml" ), 'a' ) do |f|     
           f.write( 
-"#{ classname }:
-  create:
-    unknown:
-  read:
-    unknown:
-  update:
-    unknown:
-  destroy:
-    unknown:
+"
 
+#{ classname }:
+  create:
+  read:
+  update:
+  destroy:
 
 " 
             )
@@ -103,7 +108,17 @@ end"
           dirs << File.join( Dir.pwd, "app/templates/#{ dirname }" ) 
           dirs.each { |path| Dir.mkdir( path ) unless Dir.exists?( path ) }
           File.open( File.join( Dir.pwd, "app/assets/javascripts/views/#{ dirname }/#{ filename }.js.coffee" ), 'w' ) do |f|     
-            f.write( "Nali.View.extend #{ classname }: {}" )   
+            f.write(
+"Nali.View.extend #{ classname }:
+
+  events:  []
+
+  helpers: {}
+
+  onShow:  ->
+
+  onHide:  ->"
+              )
           end 
           File.open( File.join( Dir.pwd, "app/assets/stylesheets/#{ dirname }/#{ filename }.css.sass" ), 'w' ) do |f|     
             f.write( ".#{ classname }" )

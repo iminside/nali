@@ -18,14 +18,14 @@ module Nali
           Rake::Task[ 'assets:cache:clean' ].invoke
           Rake::Task[ 'assets' ].invoke
           
-          assets_folder = File.join @settings.public_folder, 'assets/'
-          Dir[ assets_folder + '*' ]
-          .select { |file| file =~ /application.*?\.html/ }
+          compiled_assets = File.join @settings.public_folder, 'assets/*'
+          Dir[ compiled_assets ]
+          .select { |file| file =~ /index.*?\.html/ }
           .each do |file| 
             filename    = File.basename( file ).split '.' 
-            filename[0] = 'application'
+            filename[0] = 'index'
             filename    = filename.join '.'
-            File.rename file, assets_folder + filename
+            File.rename file, File.join( @settings.public_folder, filename )
           end
           
           puts 'Assets compiled'
@@ -41,7 +41,10 @@ module Nali
         
         desc 'Remove all assets'
         task :clobber do
-          FileUtils.rm_rf File.join( @settings.root, 'public/assets' )
+          FileUtils.rm_rf File.join( @settings.public_folder, 'assets' )
+          index_path = File.join( @settings.public_folder, 'index.html' )
+          File.delete index_path if File.exists? index_path
+          File.delete index_path + '.gz' if File.exists? index_path + '.gz'
           puts 'All assets removed'
         end
         
@@ -61,7 +64,7 @@ module Nali
       Rake::SprocketsTask.new do |task|
         task.environment = @settings.assets
         task.output      = File.join( @settings.public_folder, 'assets' )
-        task.assets      = %w( application.html application.js application.css )
+        task.assets      = %w( index.html application.js application.css )
       end
     end
     

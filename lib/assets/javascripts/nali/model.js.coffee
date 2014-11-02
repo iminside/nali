@@ -60,7 +60,7 @@ Nali.extend Model:
   
   force: ( params = {} ) ->
     # создает новую модель с заданными атрибутами
-    attributes = @default_attributes()
+    attributes         = @defaultAttributes()
     attributes[ name ] = value for name, value of params
     attributes[ name ] = @normalizeValue value for name, value of attributes
     @clone( attributes: attributes ).accessing()
@@ -68,7 +68,7 @@ Nali.extend Model:
   save: ( success, failure ) ->
     # отправляет на сервер запрос на сохранение модели, вызывает success в случае успеха и failure при неудаче
     if @isValid()
-      @query "#{ @_name.lowercase() }s.save", @attributes, 
+      @query "#{ @_name.lower() }s.save", @attributes,
         ( { attributes, created, updated } ) =>
           @update( attributes, updated, created ).write()
           success? @
@@ -81,7 +81,7 @@ Nali.extend Model:
       if destroyed then model.remove()
       else model.update attributes, updated, created
     else
-      model = @extensions[ _name ].build attributes
+      model = @extensions[ _name ].new attributes
       model.updated = updated
       model.created = created
       model.write()
@@ -89,15 +89,15 @@ Nali.extend Model:
     
   select: ( filters, success, failure ) ->
     # отправляет на сервер запрос на выборку моделей по фильтру, вызывает success в случае успеха и failure при неудаче
-    @query @_name.lowercase() + 's.select', filters, success, failure if Object.keys( filters ).length
+    @query @_name.lower() + 's.select', filters, success, failure if Object.keys( filters ).length
   
   write: ->
     # добавляет модель во временную таблицу, генерирует событие create
+    @table.index[ @id ] = @ if @id and not @table.index[ @id ]
     unless @ in @table
-      @table.push @ 
-      @table.index[ @id ] = @
+      @table.push @
       @onCreate?()
-      @Model.trigger "create.#{ @_name.lowercase() }", @
+      @Model.trigger "create.#{ @_name.lower() }", @
       @Model.runNotices()
     @
     
@@ -106,45 +106,45 @@ Nali.extend Model:
     if @ in @table
       delete @table.index[ @id ]
       @table.splice @table.indexOf( @ ), 1 
-      @trigger 'destroy', @
+      @trigger 'destroy'
       @onDestroy?()
       @unsubscribeAll()
     @  
 
-  build: ( attributes ) ->
+  new: ( attributes ) ->
     # создает модель, не сохраняя её на сервере
     @force attributes
        
   create: ( attributes, success, failure ) ->
     # создает модель, и сохраняет её на сервере, вызывает success в случае успеха и failure при неудаче
-    @build( attributes ).save success, failure
+    @new( attributes ).save success, failure
     
   update: ( attributes, updated = 0, created = 0 ) ->
     # обновляет атрибуты модели, проверяя их валидность, генерирует событие update
     if not updated or updated > @updated
       @created = created if created
       changed = []
-      changed.push name for name, value of attributes when @update_attribute name, value
+      changed.push name for name, value of attributes when @updateAttribute name, value
       if changed.length
         @updated = updated if updated
         @onUpdate? changed
-        @trigger 'update', @, changed
+        @trigger 'update', changed
     @
     
-  update_attribute: ( name, value ) ->
-    # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.{ propertyName }
+  updateAttribute: ( name, value ) ->
+    # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.{ attributeName }
     value = @normalizeValue value
     if @attributes[ name ] isnt value and @isValidAttributeValue( name, value )
       @attributes[ name ] = value
       @[ 'onUpdate' + name.capitalize() ]?()
-      @trigger "update.#{ name }", @
+      @trigger "update.#{ name }"
       true
     else false
     
   destroy: ( success, failure ) ->
     # отправляет на сервер запрос на удаление модели, вызывает success в случае успеха и failure при неудаче
-    @query @_name.lowercase() + 's.destroy', @attributes, success, failure
-  
+    @query @_name.lower() + 's.destroy', @attributes, success, failure
+    @
   # поиск моделей
   
   find: ( id ) ->
@@ -154,20 +154,28 @@ Nali.extend Model:
   where: ( filters ) ->
     # находит все модели соответствующие фильтру, также отправляет запрос с фильтром на сервер, 
     # возвращает коллекцию моделей, модели найденные на сервере также попадут в эту коллекцию
-    collection = @Collection.clone model: @, filters: filters
+    collection = @Collection.new @, filters
     collection.add model for model in @table when model.isCorrect filters
     if @forced and not collection.length
       attributes = {}
       attributes[ key ] = value for key, value of filters when typeof value in [ 'number', 'string' ]
-      collection.add @build attributes
+      collection.add @new attributes
     @select filters
     collection  
   
   # работа с аттрибутами
   
-  default_attributes: ->
+  guid: ->
+    # генерирует случайный идентификатор
+    date = new Date().getTime()
+    'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace /[xy]/g, ( sub ) ->
+      rand = ( date + Math.random() * 16 ) % 16 | 0
+      date = Math.floor date / 16
+      ( if sub is 'x' then rand else ( rand & 0x7 | 0x8 ) ).toString 16
+
+  defaultAttributes: ->
     # возвращает объект аттрибутов по умолчанию
-    attributes = id: null
+    attributes = id: @guid()
     for name, value of @attributes
       if value instanceof Object 
         attributes[ name ] = if value.default? then value.default else null
@@ -184,6 +192,7 @@ Nali.extend Model:
 
   isCorrect: ( filters = {} ) ->
     # проверяет соответствие аттрибутов модели определенному набору фильтров, возвращает true либо false
+    return filters.call @ if typeof filters is 'function'
     return false unless Object.keys( filters ).length
     return false for name, filter of filters when not @isCorrectAttribute @attributes[ name ], filter
     return true
@@ -206,34 +215,73 @@ Nali.extend Model:
   setRelations: ->
     # устанавливает геттеры к объектам связанным с моделью
     @belongsToRelation  attribute for attribute of @attributes when /_id$/.test attribute
-    @hasOneRelation     attribute for attribute in [].concat @hasOne
-    @hasManyRelation    attribute for attribute in [].concat @hasMany
+    for attribute in [].concat @hasOne
+      if typeof attribute is 'string' then @hasOneRelation attribute else @hasOneThroughRelation attribute
+    for attribute in [].concat @hasMany
+      if typeof attribute is 'string' then @hasManyRelation attribute else @hasManyThroughRelation attribute
     @  
     
   belongsToRelation: ( attribute ) ->
-    # устанавливает геттер типа belongs_to возвращающий связанную модель
-    name  = attribute.replace '_id', ''
-    model = @Model.extensions[ name.capitalize() ]
-    @getter name, => model.find @[ attribute ]
+    # устанавливает геттер типа belongsTo возвращающий связанную модель
+    name          = attribute.replace '_id', ''
+    relationModel = @Model.extensions[ name.capitalize() ]
+    @getter name, => relationModel.find @[ attribute ]
     @ 
   
-  hasOneRelation: ( name ) ->
-    # устанавливает геттер типа has_one возвращающий связанную модель
+  hasOneRelation: ( params ) ->
+    # устанавливает геттер типа hasOne возвращающий связанную модель
+    name          = Object.keys( params )[0]
+    relationModel = @Model.extensions[ name.capitalize() ]
     @getter name, => 
       delete @[ name ]
-      ( filters = {} )[ "#{ @_name.lowercase() }_id" ] = @id
-      relation = @Model.extensions[ name.capitalize() ].where filters
+      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
+      relation = relationModel.where filters
       @getter name, => relation.first()
-      relation.first()
+      @[ name ]
     @
   
   hasManyRelation: ( name ) ->
-    # устанавливает геттер типа has_many возвращающий коллекцию связанных моделей
+    # устанавливает геттер типа hasMany возвращающий коллекцию связанных моделей
+    relationModel = @Model.extensions[ name[ ...-1 ].capitalize() ]
+    @getter name, =>
+      delete @[ name ]
+      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
+      @[ name ] = relationModel.where filters
+    @
+
+  hasOneThroughRelation: ( params ) ->
+    # устанавливает геттер типа hasOne возвращающий модель,
+    # связанную с текущей через модель through
+    name          = Object.keys( params )[0]
+    throughModel  = @Model.extensions[ params[ name ].through.capitalize() ]
+    @getter name, =>
+      delete @[ name ]
+      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
+      throughList = throughModel.where filters
+      @getter name, => throughList.first()?[ name ]
+      @[ name ]
+    @
+
+  hasManyThroughRelation: ( params ) ->
+    # устанавливает геттер типа hasMany возвращающий коллекцию моделей,
+    # связанных с текущей через модель through
+    name          = Object.keys( params )[0]
+    relName       = name[ ...-1 ]
+    throughModel  = @Model.extensions[ params[ name ].through.capitalize() ]
+    relationModel = @Model.extensions[ name[ ...-1 ].capitalize() ]
+    relationName  = relationModel._name.lower()
     @getter name, => 
       delete @[ name ]
-      ( filters = {} )[ "#{ @_name.lowercase() }_id" ] = @id
-      @[ name ] = @Model.extensions[ name[ ...-1 ].capitalize() ].where filters
-    @     
+      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
+      throughList = throughModel.where filters
+      @[ name ] = @Collection.new relationModel, ->
+        return true for through in throughList when through[ relationName ] is @
+        false
+      @[ name ].add model[ relName ] for model in throughList
+      @[ name ].subscribeTo throughList, 'update.length.add',    ( collection, model ) -> @add    model[ relName ]
+      @[ name ].subscribeTo throughList, 'update.length.remove', ( collection, model ) -> @remove model[ relName ]
+      @[ name ]
+    @
   
   # работа с видами
   
@@ -247,7 +295,7 @@ Nali.extend Model:
           
   show: ( name, insertTo ) ->
     # вставляет html-код вида в указанное место ( это может быть селектор, html-элемент или ничего - тогда 
-    # вставка произойдет в элемент указанный в самом виде либо в элемент приложения )
+    # вставка произойдет в элемент указанный в самом виде либо в элемент-контейнер приложения )
     # функция возвращает объект вида при успехе либо null при неудаче
     if ( view = @view( name ) )? then view.show insertTo else null 
     
@@ -261,7 +309,6 @@ Nali.extend Model:
   validations:          
     # набор валидационных проверок
     presence:  ( value, filter ) -> if filter then value? else not value?
-    match:     ( value, filter ) -> not value? or filter.test value
     inclusion: ( value, filter ) -> not value? or value in filter
     exclusion: ( value, filter ) -> not value? or value not in filter
     length:    ( value, filter ) ->
@@ -273,10 +320,11 @@ Nali.extend Model:
       true
     format:    ( value, filter ) -> 
       return true if not value?
-      return true if filter is 'boolean' and /^true|false$/.test value
-      return true if filter is 'number'  and /^[0-9]+$/.test value
-      return true if filter is 'letters' and /^[A-zА-я]+$/.test value
-      return true if filter is 'email'   and /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,4})+$/.test value
+      return true if filter instanceof RegExp and filter.test value
+      return true if filter is 'boolean'      and /^true|false$/.test value
+      return true if filter is 'number'       and /^[0-9]+$/.test value
+      return true if filter is 'letters'      and /^[A-zА-я]+$/.test value
+      return true if filter is 'email'        and /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,4})+$/.test value
       false
   
   isValid: ->
@@ -287,7 +335,7 @@ Nali.extend Model:
     
   isValidAttributeValue: ( name, value ) ->
     # проверяет валидно ли значение для определенного атрибута модели, вызывается при проверке 
-    # валидности модели, а также в методе update_attribute() перед изменением значения атрибута, если значение
+    # валидности модели, а также в методе updateAttribute() перед изменением значения атрибута, если значение
     # валидно то вызов model.isValidAttributeValue( name, value )? вернет true, иначе false
     for validation, tester of @validations when ( filter = @::attributes[ name ]?[ validation ] )?
       unless tester.call @, value, filter

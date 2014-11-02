@@ -43,7 +43,7 @@ window.Nali =
   childOf: ( parent ) ->
     if parent instanceof Object
       return false unless @::?
-      return true  if     @:: is parent
+      return true  if     ( @:: ) is parent
     else
       return false unless @::?._name?
       return true  if     @::_name is parent
@@ -65,7 +65,7 @@ window.Nali =
     @__defineSetter__ property, callback
     @
 
-  access: ( obj, getter, setter ) ->
+  access: ( obj ) ->
     for own property of obj
       do( property ) =>
         @getter property,           -> obj[ property ]
@@ -117,7 +117,7 @@ window.Nali =
     observer.removeObservationItem 'observables', @, event
     @
   
-  unsubscribeTo: ( observable, event ) ->
+  unsubscribeFrom: ( observable, event ) ->
     observable.unsubscribe @, event
     @
   
@@ -126,9 +126,9 @@ window.Nali =
     @
   
   unsubscribeFromAll: ( event ) ->
-    @unsubscribeTo item[0], event for item in @observables[..]
+    @unsubscribeFrom item[0], event for item in @observables[..]
     @
     
   trigger: ( event, args... ) ->
-    item[2].call item[0], args... for item in @observers[..] when item[1] is event
+    item[2].call item[0], @, args... for item in @observers[..] when item[1] is event
     @

@@ -1,19 +1,18 @@
-String::uppercase = ->
+String::upper = ->
   "#{ @toUpperCase() }"
 
-String::lowercase = ->
+String::lower = ->
   "#{ @toLowerCase() }"
 
 String::capitalize = ->
-  @charAt(0).uppercase() + @slice(1)
+  @charAt(0).upper() + @slice(1)
   
 String::uncapitalize = ->
-  @charAt(0).lowercase() + @slice(1)
+  @charAt(0).lower() + @slice(1)
 
-String::camelcase = ->
+String::camel = ->
   @replace /(_[^_]+)/g, ( match ) -> match[ 1.. ].capitalize()
   
 String::underscore = ->
-  str = @replace /([A-Z])/g, ( match ) -> '_' + match.lowercase()
-  if str[ 0...1 ] is '_' then str[ 1.. ] else str  
-    
+  str = @replace /([A-Z])/g, ( match ) -> '_' + match.lower()
+  if str[ 0...1 ] is '_' then str[ 1.. ] else str

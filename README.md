@@ -1,26 +1,31 @@
-# Welcome to Nali
+# Добро пожаловать в Nali
 
-Nali is the framework for developing async web applications
+**Nali** - это фреймворк для разработки асинхронных веб приложений, включающий в себя веб-сервер и инструменты для создания как клиентской, так и серверной части. Серверная часть разрабатывается на языке **Ruby**, клиентская часть на **Coffeescript** (или Javascript), **Sass** (или less, scss, css) и **Html** (или erb, haml, slim)
 
-## Getting Started
+## Начало работы
 
-1. Install Nali at the command prompt if you haven't yet:
+1. Установите Nali с помощью командной строки:
 
-        gem install nali
+	***gem install nali***
 
-2. At the command prompt, create a new Nali application:
+2. Для создания нового приложения выполните команду:
 
-        nali new appName
+	***nali new appName***
 
-   where "appName" is the application name.
+  где "appName" - это имя вашего приложения
 
-3. Change directory to `appName` and run:
+3. Перейдите в директорию `appName`:
 
-        bundle install
+	***cd appName***
+  
+4. Выполните команду для установки зависимостей:
 
-4. Start the web server
+	***bundle install***
 
-        bundle exec thin start
+5. Запустите веб-сервер командой:
 
-5. Using a browser, go to `http://localhost:3000` and you'll see:
-"Welcome to Nali"
+	***bundle exec thin start***
+
+6. Откройте браузер и перейдите по адресу `http://localhost:3000`
+  
+ 	Вы увидите первую подготовленную страницу "Welcome to Nali" 

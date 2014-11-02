@@ -2,7 +2,7 @@ Nali.extend View:
   
   extension: ->
     if @_name isnt 'View'
-      @_shortName = @_name.underscore().split( '_' )[ 1.. ].join '_'
+      @_shortName = @_name.underscore().split( '_' )[ 1.. ].join( '_' ).camel()
       @parseTemplate()
       @parseEvents() 
     @ 
@@ -18,9 +18,12 @@ Nali.extend View:
   onSourceDestroyed: -> @hide()
   
   getOf: ( source, property ) ->
-    @subscribeTo source, "update.#{ property }", @onSourceUpdated
+    @redrawOn source, "update.#{ property }"
     source[ property ]
     
+  redrawOn: ( source, event ) ->
+    @subscribeTo source, event, @onSourceUpdated
+
   insertTo: ->
     if ( layout = @layout() )?.childOf? 'View' then layout.show().element.find '.yield'
     else @Application.htmlContainer
@@ -134,7 +137,7 @@ Nali.extend View:
     @
 
   bindEvents: ->
-    unless @binded?
+    unless @_eventsBinded?
       @element.find( 'a'    ).on 'click',  ( event ) => @runLink event
       @element.find( 'form' ).on 'submit', ( event ) => @runForm event
       @element.on 'click',  ( event ) => @runLink event if @element.is 'a' 
@@ -143,7 +146,7 @@ Nali.extend View:
         for handler in handlers
           do ( selector, type, events, handler ) =>
             @element[ type ] events, selector, ( event ) => @[ handler ] event 
-      @binded = true
+      @_eventsBinded = true
     @
   
   prepareElement: ->

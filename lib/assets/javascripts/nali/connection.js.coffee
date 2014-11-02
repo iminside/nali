@@ -1,8 +1,7 @@
 Nali.extend Connection:
 
   initialize: ->
-    @subscribeTo @Application, 'start', @open
-    @::query = ( args... ) => @query args... 
+    @::expand query: ( args... ) => @query args...
     @
     
   open: ->
@@ -13,27 +12,24 @@ Nali.extend Connection:
     @dispatcher.onmessage = ( event ) => @onMessage JSON.parse event.data
     @keepAlive()
     @
-    
-  connected:      false
+
   keepAliveTimer: null
   journal:        []
     
   onOpen: ( event ) ->
-    @connected = true
     @trigger 'open'
-    
-  onMessage: ( message ) ->
-    @[ message.action ] message
-    
-  onClose: ( event ) ->
-    @connected = false
-    @trigger 'close'
     
   onError: ( event ) ->
     console.warn 'Connection error %O', event
+    
+  onClose: ( event ) ->
+    @trigger 'close'
+    @open()
+
+  onMessage: ( message ) ->
+    @[ message.action ] message
   
   send: ( msg ) ->
-    @open() unless @connected
     @dispatcher.send JSON.stringify msg
     @
       
@@ -72,6 +68,7 @@ Nali.extend Connection:
     @
     
   query: ( to, params, success, failure ) ->
+    return success?() unless @Application.useWebSockets
     [ controller, action ] = to.split '.'
     @journal.push callbacks = success: success, failure: failure
     @send 
