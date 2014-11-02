@@ -2,15 +2,11 @@ source 'https://rubygems.org'
 
 gem 'nali'
 
-# Use Uglifier as compressor for JavaScript assets
+# Use sqlite3 as the database for Active Record
+gem 'sqlite3'
+
+# Use Uglifier as compressor for JavaScript client
 gem 'uglifier'
 
-group :development, :test do
-
-  # Use sqlite3 as the database for Active Record
-  gem 'sqlite3'
-
-  # Use debugger
-  #gem 'debugger'
-
-end
+# Use debugger
+#gem 'debugger'

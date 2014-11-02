@@ -4,9 +4,9 @@ module Nali
    
     set :root,          File.expand_path( '.' )
     set :database_file, File.join( root, 'config/database.yml' )
-    set :assets,        Sprockets::Environment.new( root )
-    set :assets_digest, false
-    set :assets_debug,  false
+    set :client,        Sprockets::Environment.new( root )
+    set :client_digest, false
+    set :client_debug,  false
     set :static,        true
     
     register Sinatra::ActiveRecordExtension
@@ -20,39 +20,40 @@ module Nali
     
     configure do
       
-      assets.cache = Sprockets::Cache::FileStore.new File.join( root, 'tmp/cache' )
+      client.cache = Sprockets::Cache::FileStore.new File.join( root, 'tmp/cache' )
       
-      assets.append_path File.join( Nali.path, 'assets/javascripts' ) 
-      
-      %w( app/templates app/assets/stylesheets app/assets/javascripts lib/assets/stylesheets 
-          lib/assets/javascripts vendor/assets/stylesheets vendor/assets/javascripts
-      ).each { |path| assets.append_path File.join( root, path ) }
+      client.append_path File.join( Nali.path, 'client/javascripts' )
+
+      %w( app/client/templates app/client/stylesheets app/client/javascripts lib/client/stylesheets
+          lib/client/javascripts vendor/client/stylesheets vendor/client/javascripts
+      ).each { |path| client.append_path File.join( root, path ) }
 
       Sprockets::Helpers.configure do |config|
-        config.environment = assets
-        config.debug       = assets_debug
-        config.digest      = assets_digest
+        config.environment = client
+        config.debug       = client_debug
+        config.digest      = client_digest
+        config.prefix      = '/client'
       end
       
     end
 
-    get '/assets/*.*' do |path, ext|
-      pass if ext == 'html' or not asset = settings.assets[ path + '.' + ext ]
+    get '/client/*.*' do |path, ext|
+      pass if ext == 'html' or not asset = settings.client[ path + '.' + ext ]
       content_type asset.content_type
       params[ :body ] ? asset.body : asset
     end
     
-    require File.join( root, 'config/routes' )
+    require File.join( root, 'app/server/routes' )
     
     include Nali::Clients
 
     get '/*' do
       if !request.websocket?
-        compiled_path = File.join settings.public_folder, 'index.html'
+        compiled_path = File.join settings.public_folder, 'client/application.html'
         if settings.environment != :development and File.exists?( compiled_path )
           send_file compiled_path
         else
-          settings.assets[ 'index.html' ]
+          settings.client[ 'application.html' ]
         end
       else
         request.websocket do |client|
@@ -65,18 +66,18 @@ module Nali
     
     def self.access_options
       if settings.environment == :development
-        YAML.load_file( File.join( root, 'app/models/access.yml' ) ).keys_to_sym!
+        YAML.load_file( File.join( root, 'app/server/models/access.yml' ) ).keys_to_sym!
       else
-        @access_options ||= YAML.load_file( File.join( root, 'app/models/access.yml' ) ).keys_to_sym!
+        @access_options ||= YAML.load_file( File.join( root, 'app/server/models/access.yml' ) ).keys_to_sym!
       end
     end
     
     def self.initialize!
       Dir[ File.join( root, 'lib/*/**/*.rb' ) ].each { |file| require( file ) }
-      require File.join( root, 'app/controllers/application_controller.rb' )
-      Dir[ File.join( root, 'app/**/*.rb'   ) ].each { |file| require( file ) }
+      require File.join( root, 'app/server/controllers/application_controller.rb' )
+      Dir[ File.join( root, 'app/server/**/*.rb'   ) ].each { |file| require( file ) }
       require File.join( root, 'config/application' )
-      require File.join( root, 'config/clients' )
+      require File.join( root, 'app/server/clients' )
       Dir[ File.join( root, 'config/initializers/**/*.rb'   ) ].each { |file| require( file ) }
       self
     end

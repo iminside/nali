@@ -9,50 +9,38 @@ module Nali
     
     def define
       
-      namespace :assets do
-        desc "Compile assets" 
+      namespace :client do
+        desc "Compile client files"
         task :compile do
           sprockets_tasks
           
-          Rake::Task[ 'assets:clobber' ].invoke
-          Rake::Task[ 'assets:cache:clean' ].invoke
+          Rake::Task[ 'client:clean' ].invoke
+          Rake::Task[ 'client:cache:clean' ].invoke
           Rake::Task[ 'assets' ].invoke
           
-          compiled_assets = File.join @settings.public_folder, 'assets/*'
-          Dir[ compiled_assets ]
-          .select { |file| file =~ /index.*?\.html/ }
+          compiled_path = File.join @settings.public_folder, 'client'
+          Dir[ compiled_path + '/*' ]
+          .select { |file| file =~ /application.*?\.html/ }
           .each do |file| 
             filename    = File.basename( file ).split '.' 
-            filename[0] = 'index'
+            filename[0] = 'application'
             filename    = filename.join '.'
-            File.rename file, File.join( @settings.public_folder, filename )
+            File.rename file, File.join( compiled_path, filename )
           end
-          
-          puts 'Assets compiled'
-
+          puts 'Client files compiled'
         end
         
-        desc 'Remove old assets'
+        desc 'Remove compiled client files'
         task :clean do
-          sprockets_tasks
-          Rake::Task[ 'clean_assets' ].invoke
-          puts 'Old assets removed'
-        end
-        
-        desc 'Remove all assets'
-        task :clobber do
-          FileUtils.rm_rf File.join( @settings.public_folder, 'assets' )
-          index_path = File.join( @settings.public_folder, 'index.html' )
-          File.delete index_path if File.exists? index_path
-          File.delete index_path + '.gz' if File.exists? index_path + '.gz'
-          puts 'All assets removed'
+          FileUtils.rm_rf File.join( @settings.public_folder, 'client' )
+          puts 'Compiled client files removed'
         end
         
         namespace :cache do
-          desc 'Remove cached files'
+          desc 'Remove cached client files'
           task :clean do
             FileUtils.rm_rf File.join( @settings.root, 'tmp/cache' )
-            puts 'Cached files removed'
+            puts 'Cached client files removed'
           end
         end
 
@@ -62,9 +50,9 @@ module Nali
     def sprockets_tasks
       require 'rake/sprocketstask'
       Rake::SprocketsTask.new do |task|
-        task.environment = @settings.assets
-        task.output      = File.join( @settings.public_folder, 'assets' )
-        task.assets      = %w( index.html application.js application.css )
+        task.environment = @settings.client
+        task.output      = File.join( @settings.public_folder, 'client' )
+        task.assets      = %w( application.html application.js application.css )
       end
     end
     

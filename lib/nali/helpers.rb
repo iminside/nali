@@ -3,7 +3,7 @@ module Sprockets
     
     def templates_tags
       result = ''
-      Dir[ File.join( './app/templates/*/*' ) ].each do |path|
+      Dir[ File.join( './app/client/templates/*/*' ) ].each do |path|
         arr      = path.split( '/' ).reverse
         id       = arr[1] + '_' + arr[0].split( '.' )[0]
         asset    = environment[ path ]

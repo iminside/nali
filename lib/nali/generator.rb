@@ -38,14 +38,14 @@ module Nali
         end
         filename  = name.downcase
         classname = name.camelize
-        File.open( File.join( Dir.pwd, "app/assets/javascripts/models/#{ filename }.js.coffee" ), 'w' ) do |f|     
+        File.open( File.join( Dir.pwd, "app/client/javascripts/models/#{ filename }.js.coffee" ), 'w' ) do |f|
           f.write(
 "Nali.Model.extend #{ classname }:
 
   attributes: {}"
             )
         end
-        File.open( File.join( Dir.pwd, "app/assets/javascripts/controllers/#{ filename }s.js.coffee" ), 'w' ) do |f|     
+        File.open( File.join( Dir.pwd, "app/client/javascripts/controllers/#{ filename }s.js.coffee" ), 'w' ) do |f|
           f.write(
 "Nali.Controller.extend #{ classname }s:
 
@@ -88,8 +88,8 @@ end"
             )
         end
         FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
-        puts "Created: app/assets/javascripts/models/#{ filename }.js.coffee"
-        puts "Created: app/assets/javascripts/controllers/#{ filename }s.js.coffee"
+        puts "Created: app/client/javascripts/models/#{ filename }.js.coffee"
+        puts "Created: app/client/javascripts/controllers/#{ filename }s.js.coffee"
         puts "Created: app/models/#{ filename }.rb"
         puts "Created: app/controllers/#{ filename }s_controller.rb"
         puts "Updated: app/models/access.yml"
@@ -103,11 +103,11 @@ end"
         classname = name.underscore.camelize
         if not dirname.empty? and not filename.empty? and not classname.empty?
           dirs = []
-          dirs << File.join( Dir.pwd, "app/assets/javascripts/views/#{ dirname }" )
-          dirs << File.join( Dir.pwd, "app/assets/stylesheets/#{ dirname }" ) 
-          dirs << File.join( Dir.pwd, "app/templates/#{ dirname }" ) 
+          dirs << File.join( Dir.pwd, "app/client/javascripts/views/#{ dirname }" )
+          dirs << File.join( Dir.pwd, "app/client/stylesheets/#{ dirname }" )
+          dirs << File.join( Dir.pwd, "app/client/templates/#{ dirname }" )
           dirs.each { |path| Dir.mkdir( path ) unless Dir.exists?( path ) }
-          File.open( File.join( Dir.pwd, "app/assets/javascripts/views/#{ dirname }/#{ filename }.js.coffee" ), 'w' ) do |f|     
+          File.open( File.join( Dir.pwd, "app/client/javascripts/views/#{ dirname }/#{ filename }.js.coffee" ), 'w' ) do |f|
             f.write(
 "Nali.View.extend #{ classname }:
 
@@ -120,14 +120,14 @@ end"
   onHide:  ->"
               )
           end 
-          File.open( File.join( Dir.pwd, "app/assets/stylesheets/#{ dirname }/#{ filename }.css.sass" ), 'w' ) do |f|     
+          File.open( File.join( Dir.pwd, "app/client/stylesheets/#{ dirname }/#{ filename }.css.sass" ), 'w' ) do |f|
             f.write( ".#{ classname }" )
           end 
-          File.open( File.join( Dir.pwd, "app/templates/#{ dirname }/#{ filename }.html" ), 'w' ) {}
+          File.open( File.join( Dir.pwd, "app/client/templates/#{ dirname }/#{ filename }.html" ), 'w' ) {}
           FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
-          puts "Created: app/assets/javascripts/views/#{ dirname }/#{ filename }.js.coffee"
-          puts "Created: app/assets/stylesheets/#{ dirname }/#{ filename }.css.sass"
-          puts "Created: app/templates/#{ dirname }/#{ filename }.html"
+          puts "Created: app/client/javascripts/views/#{ dirname }/#{ filename }.js.coffee"
+          puts "Created: app/client/stylesheets/#{ dirname }/#{ filename }.css.sass"
+          puts "Created: app/client/templates/#{ dirname }/#{ filename }.html"
         else puts 'Invalid view name' end
       else puts 'Please go to the application folder' end
     end    
