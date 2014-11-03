@@ -15,8 +15,10 @@ Nali.extend Connection:
 
   keepAliveTimer: null
   journal:        []
+  reconnectDelay: 0
 
   onOpen: ( event ) ->
+    @reconnectDelay = 0
     @trigger 'open'
 
   onError: ( event ) ->
@@ -24,7 +26,8 @@ Nali.extend Connection:
 
   onClose: ( event ) ->
     @trigger 'close'
-    @open()
+    setTimeout ( => @open() ), @reconnectDelay * 100
+    @reconnectDelay += 1
 
   onMessage: ( message ) ->
     @[ message.action ] message
