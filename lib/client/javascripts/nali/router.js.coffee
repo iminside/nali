@@ -64,7 +64,7 @@ Nali.extend Router:
       @
     else @_saveHistory
 
-  setUrl: ( url = null ) ->
+  changeUrl: ( url = null ) ->
     if @saveHistory()
       @routedUrl = url if url?
       history.pushState null, null, '/' + ( @url = @routedUrl ) if @routedUrl isnt @url

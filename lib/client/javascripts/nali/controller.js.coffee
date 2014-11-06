@@ -47,16 +47,15 @@ Nali.extend Controller:
 
   run: ( action, filters, params ) ->
     collection = @Model.extensions[ @modelName ].where filters
-    controller = @new( collection, filters, params ).runAction action
-    if controller.stopped
-      controller.collection.destroy()
-    else
-      controller.collection.show action
-      @Router.setUrl()
+    @new( collection, filters, params ).runAction action
     @
 
   runAction: ( name ) ->
     method.call @ for method in @_actions[ name ].methods when not @stopped
+    if @stopped then @collection.destroy()
+    else
+      @collection.show name
+      @Router.changeUrl()
     @
 
   stop: ->
