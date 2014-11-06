@@ -253,7 +253,7 @@ Nali.extend Model:
     params
 
   setRelations: ->
-    # запускает установку у модели
+    # запускает установку связей у модели
     @setRelationsType type for type in [ 'belongsTo', 'hasOne', 'hasMany', 'hasOneThrough', 'hasManyThrough' ]
     @
 
