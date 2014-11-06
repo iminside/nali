@@ -4,6 +4,7 @@ Nali.extend Model:
     if @_name isnt 'Model'
       @table       = @tables[ @_name ] ?= []
       @table.index = {}
+      @parseRelations()
       @adapt()
     @
 
@@ -212,74 +213,99 @@ Nali.extend Model:
 
   # работа со связями
 
+  parseRelations: ( type, options ) ->
+    # производит разбор связей
+    @relations = {}
+    for type in [ 'belongsTo', 'hasOne', 'hasMany' ]
+      for options in [].concat( @[ type ] ) when @[ type ]?
+        params = @[ 'parse' + type.capitalize() ] @parseInitialRelationParams options
+        section = type + if params.through? then 'Through' else ''
+        ( @relations[ section ] ?= [] ).push params
+    @
+
+  parseInitialRelationParams: ( options ) ->
+    # дает начальные параметры настроек связи
+    if typeof options is 'object'
+      params         = name: Object.keys( options )[0]
+      params.through = through if through = options[ params.name ].through
+      params.key     = key     if key     = options[ params.name ].key
+      params.model   = @Model.extensions[ model.capitalize() ] if model = options[ params.name ].model
+    else
+      params = name: options
+    params
+
+  parseBelongsTo: ( params ) ->
+    # производит разбор связей belongsTo
+    params.model ?= @Model.extensions[ params.name.capitalize() ]
+    params.key   ?= params.model._name.lower() + '_id'
+    params
+
+  parseHasOne: ( params ) ->
+    # производит разбор связей hasOne
+    params.model ?= @Model.extensions[ params.name.capitalize() ]
+    params.key   ?= ( if params.through then params.model._name else @_name + '_id' ).lower()
+    params
+
+  parseHasMany: ( params ) ->
+    # производит разбор связей hasMany
+    params.model ?= @Model.extensions[ params.name[ ...-1 ].capitalize() ]
+    params.key   ?= ( if params.through then params.model._name else @_name + '_id' ).lower()
+    params
+
   setRelations: ->
-    # устанавливает геттеры к объектам связанным с моделью
-    @belongsToRelation  attribute for attribute of @attributes when /_id$/.test attribute
-    for attribute in [].concat @hasOne
-      if typeof attribute is 'string' then @hasOneRelation attribute else @hasOneThroughRelation attribute
-    for attribute in [].concat @hasMany
-      if typeof attribute is 'string' then @hasManyRelation attribute else @hasManyThroughRelation attribute
+    # запускает установку у модели
+    @setRelationsType type for type in [ 'belongsTo', 'hasOne', 'hasMany', 'hasOneThrough', 'hasManyThrough' ]
     @
 
-  belongsToRelation: ( attribute ) ->
+  setRelationsType: ( type ) ->
+    # запускает установку связей определенного типа
+    if params = @relations[ type ]
+      @[ 'set' + type.capitalize() ] param for param in params
+    @
+
+  setBelongsTo: ( { key, model, name, through } ) ->
     # устанавливает геттер типа belongsTo возвращающий связанную модель
-    name          = attribute.replace '_id', ''
-    relationModel = @Model.extensions[ name.capitalize() ]
-    @getter name, => relationModel.find @[ attribute ]
+    @getter name, => model.find @[ key ]
     @
 
-  hasOneRelation: ( params ) ->
+  setHasOne: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasOne возвращающий связанную модель
-    name          = Object.keys( params )[0]
-    relationModel = @Model.extensions[ name.capitalize() ]
     @getter name, =>
       delete @[ name ]
-      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
-      relation = relationModel.where filters
-      @getter name, => relation.first()
+      ( filters = {} )[ key ] = @id
+      collection = model.where filters
+      @getter name, => collection.first()
       @[ name ]
     @
 
-  hasManyRelation: ( name ) ->
+  setHasMany: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasMany возвращающий коллекцию связанных моделей
-    relationModel = @Model.extensions[ name[ ...-1 ].capitalize() ]
     @getter name, =>
       delete @[ name ]
-      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
-      @[ name ] = relationModel.where filters
+      ( filters = {} )[ key ] = @id
+      @[ name ] = model.where filters
     @
 
-  hasOneThroughRelation: ( params ) ->
+  setHasOneThrough: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasOne возвращающий модель,
     # связанную с текущей через модель through
-    name          = Object.keys( params )[0]
-    throughModel  = @Model.extensions[ params[ name ].through.capitalize() ]
     @getter name, =>
       delete @[ name ]
-      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
-      throughList = throughModel.where filters
-      @getter name, => throughList.first()?[ name ]
+      @getter name, => @[ through ][ key ]
       @[ name ]
     @
 
-  hasManyThroughRelation: ( params ) ->
+  setHasManyThrough: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasMany возвращающий коллекцию моделей,
     # связанных с текущей через модель through
-    name          = Object.keys( params )[0]
-    relName       = name[ ...-1 ]
-    throughModel  = @Model.extensions[ params[ name ].through.capitalize() ]
-    relationModel = @Model.extensions[ name[ ...-1 ].capitalize() ]
-    relationName  = relationModel._name.lower()
     @getter name, =>
       delete @[ name ]
-      ( filters = {} )[ "#{ @_name.lower() }_id" ] = @id
-      throughList = throughModel.where filters
-      @[ name ] = @Collection.new relationModel, ->
-        return true for through in throughList when through[ relationName ] is @
+      @[ name ] = @Collection.new model, ->
+        return true for model in @[ through ] when model[ key ] is @
         false
-      @[ name ].add model[ relName ] for model in throughList
-      @[ name ].subscribeTo throughList, 'update.length.add',    ( collection, model ) -> @add    model[ relName ]
-      @[ name ].subscribeTo throughList, 'update.length.remove', ( collection, model ) -> @remove model[ relName ]
+      @[ name ].add model[ key ] for model in @[ through ]
+      @[ name ].subscribeTo @[ through ], 'update.length.add',    ( collection, model ) -> @add    model[ key ]
+      @[ name ].subscribeTo @[ through ], 'update.length.remove', ( collection, model ) -> @remove model[ key ]
       @[ name ]
     @
 
