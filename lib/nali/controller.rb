@@ -2,7 +2,7 @@ module Nali
   
   module Controller
     
-    attr_reader :client, :params, :message
+    attr_reader :client, :params
     
     def self.included( base )
       base.extend self
@@ -71,11 +71,11 @@ module Nali
     end
     
     def trigger_success( params = nil )
-      client.send_json( { action: 'success', params: params, journal_id: message[ :journal_id ] } ) 
+      client.send_json( { action: 'success', params: params, journal_id: @message[ :journal_id ] } )
     end
     
     def trigger_failure( params = nil )
-      client.send_json( { action: 'failure', params: params, journal_id: message[ :journal_id ] } ) 
+      client.send_json( { action: 'failure', params: params, journal_id: @message[ :journal_id ] } )
     end
     
     def before( &closure )
