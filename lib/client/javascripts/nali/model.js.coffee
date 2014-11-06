@@ -237,19 +237,19 @@ Nali.extend Model:
   parseBelongsTo: ( params ) ->
     # производит разбор связей belongsTo
     params.model ?= @Model.extensions[ params.name.capitalize() ]
-    params.key   ?= params.model._name.lower() + '_id'
+    params.key   ?= params.name.lower() + '_id'
     params
 
   parseHasOne: ( params ) ->
     # производит разбор связей hasOne
     params.model ?= @Model.extensions[ params.name.capitalize() ]
-    params.key   ?= ( if params.through then params.model._name else @_name + '_id' ).lower()
+    params.key   ?= ( if params.through then params.name else @_name + '_id' ).lower()
     params
 
   parseHasMany: ( params ) ->
     # производит разбор связей hasMany
     params.model ?= @Model.extensions[ params.name[ ...-1 ].capitalize() ]
-    params.key   ?= ( if params.through then params.model._name else @_name + '_id' ).lower()
+    params.key   ?= ( if params.through then params.name[ ...-1 ] else @_name + '_id' ).lower()
     params
 
   setRelations: ->
