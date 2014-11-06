@@ -91,9 +91,10 @@ Nali.extend Model:
   select: ( filters, success, failure ) ->
     # отправляет на сервер запрос на выборку моделей по фильтру, вызывает success в случае успеха и failure при неудаче
     @query @_name.lower() + 's.select', filters, success, failure if Object.keys( filters ).length
+    @
 
   write: ->
-    # добавляет модель во временную таблицу, генерирует событие create
+    # добавляет модель в локальную таблицу, генерирует событие create
     @table.index[ @id ] = @ if @id and not @table.index[ @id ]
     unless @ in @table
       @table.push @
@@ -103,7 +104,7 @@ Nali.extend Model:
     @
 
   remove: ->
-    # удаляет модель из временной таблицы, генерирует событие destroy
+    # удаляет модель из локальной таблицы, генерирует событие destroy
     if @ in @table
       delete @table.index[ @id ]
       @table.splice @table.indexOf( @ ), 1
@@ -146,6 +147,7 @@ Nali.extend Model:
     # отправляет на сервер запрос на удаление модели, вызывает success в случае успеха и failure при неудаче
     @query @_name.lower() + 's.destroy', @attributes, success, failure
     @
+
   # поиск моделей
 
   find: ( id ) ->
@@ -153,15 +155,13 @@ Nali.extend Model:
     @table.index[ id ]
 
   where: ( filters ) ->
-    # находит все модели соответствующие фильтру, также отправляет запрос с фильтром на сервер,
-    # возвращает коллекцию моделей, модели найденные на сервере также попадут в эту коллекцию
+    # возвращает коллекцию моделей соответствующих фильтру
     collection = @Collection.new @, filters
     collection.add model for model in @table when model.isCorrect filters
     if @forced and not collection.length
       attributes = {}
       attributes[ key ] = value for key, value of filters when typeof value in [ 'number', 'string' ]
       collection.add @new attributes
-    @select filters
     collection
 
   # работа с аттрибутами
