@@ -6,7 +6,8 @@ Nali.extend Collection:
 
   cloning: ->
     @subscribeTo @Model, "create.#{ @model._name.lower() }", @onModelCreated
-    @adaptations = []
+    @subscribeTo @Model, "update.#{ @model._name.lower() }", @onModelUpdated
+    @adaptations = apply: [], cancel: []
     @ordering    = {}
     @adaptCollection()
     @
@@ -18,11 +19,14 @@ Nali.extend Collection:
     @add model if model.isCorrect @filters
     @
 
-  onModelUpdated: ( model ) ->
-    if model.isCorrect @filters
-      @reorder()
-      @trigger 'update.model', model
-    else @remove model
+  onModelUpdated: ( extModel, model ) ->
+    if model in @
+      if model.isCorrect @filters
+        @reorder()
+        @trigger 'update.model', model
+      else @remove model
+    else if model.isCorrect @filters
+      @add model
     @
 
   onModelDestroyed: ( model ) ->
@@ -37,29 +41,27 @@ Nali.extend Collection:
           @
     @
 
-  adaptModel: ( model ) ->
-    adaptation.call @, model for adaptation in @adaptations
+  adaptModel: ( model, type = 'apply' ) ->
+    adaptation.call @, model for adaptation in @adaptations[ type ]
     @
 
-  adaptation: ( callback ) ->
-    callback.call @, model for model in @
-    @adaptations.push callback
+  adaptation: ( apply, cancel ) ->
+    apply.call @, model for model in @
+    @adaptations.apply.push apply
+    @adaptations.cancel.unshift cancel if cancel
     @
 
   add: ( model ) ->
     Array::push.call @, model
     @adaptModel  model
     @subscribeTo model, 'destroy', @onModelDestroyed
-    @subscribeTo model, 'update',  @onModelUpdated
     @reorder()
     @trigger 'update.length.add', model
     @trigger 'update.length', 'add', model
     @
 
-  indexOf: ( model ) ->
-    Array::indexOf.call @, model
-
   remove: ( model ) ->
+    @adaptModel model, 'cancel'
     Array::splice.call @, @indexOf( model ), 1
     @unsubscribeFrom model
     @reorder()
@@ -71,6 +73,9 @@ Nali.extend Collection:
     delete @[ index ] for model, index in @
     @length = 0
     @
+
+  indexOf: ( model ) ->
+    Array::indexOf.call @, model
 
   sort: ( sorter ) ->
     Array::sort.call @, sorter
@@ -111,17 +116,19 @@ Nali.extend Collection:
 
   show: ( viewName, insertTo, isRelation = false ) ->
     @adaptation ( model ) ->
-      view = model.view viewName
-      if isRelation
-        view.subscribeTo @, 'reset', view.hide
-      else unless @visible
-        @visible = true
-        @prepareViewToShow view
-        @hideVisibleViews()
-      else
-        @::visibleViews.push view
-      view.show insertTo
-      @inside ?= view.element[0].parentNode
+        view = model.view viewName
+        if isRelation
+          view.subscribeTo @, 'reset', view.hide
+        else unless @visible
+          @visible = true
+          @prepareViewToShow view
+          @hideVisibleViews()
+        else
+          @::visibleViews.push view
+        view.show insertTo
+        @inside ?= view.element[0].parentNode
+      , ( model ) ->
+        model.hide viewName
     @
 
   prepareViewToShow: ( view ) ->
