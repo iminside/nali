@@ -34,7 +34,7 @@ module Nali
           options.each do |option|
             if self.respond_to?( option )
               value = self.send option
-              if value.is_a?( ActiveRecord::Associations::CollectionProxy )
+              if value.is_a?( ActiveRecord::Relation )
                 relations << value
               elsif value.is_a?( ActiveRecord::Base )
                 relations << value
@@ -62,7 +62,7 @@ module Nali
     
     def sync( *watches )
       watches.flatten.each { |client| client.watch self }
-      clients.each { |client| client.sync self if client.watch?( self ) or client.filter?( self ) }
+      clients.each { |client| client.sync self if client.watch?( self ) }
     end
       
     def notice( name, params )
@@ -71,9 +71,9 @@ module Nali
     
     private
     
-    def access_options
-      Nali::Application.access_options[ self.class.name.to_sym ] or {}
-    end
+      def access_options
+        Nali::Application.access_options[ self.class.name.to_sym ] or {}
+      end
       
   end
 
