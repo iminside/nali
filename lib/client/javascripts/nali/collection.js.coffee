@@ -20,13 +20,14 @@ Nali.extend Collection:
     @
 
   onModelUpdated: ( extModel, model ) ->
-    if model in @
-      if @freezed or model.isCorrect @filters
-        @reorder()
-        @trigger 'update.model', model
-      else @remove model
-    else if not @freezed and model.isCorrect @filters
-      @add model
+    if model.written()
+      if model in @
+        if @freezed or model.isCorrect @filters
+          @reorder()
+          @trigger 'update.model', model
+        else @remove model
+      else if not @freezed and model.isCorrect @filters
+        @add model
     @
 
   onModelDestroyed: ( model ) ->
@@ -37,7 +38,7 @@ Nali.extend Collection:
     for name, method of @model when /^_\w+$/.test( name ) and typeof method is 'function'
       do ( name, method ) =>
         @[ name = name[ 1.. ] ] = ( args... ) =>
-          @adaptation ( model ) -> model[ name ] args...
+          @each ( model ) -> model[ name ] args...
           @
     @
 
