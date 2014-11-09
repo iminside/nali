@@ -101,10 +101,13 @@ Nali.extend Model:
     @query @_name.lower() + 's.select', obj
     @
 
+  written: ->
+    @ in @table
+
   write: ->
     # добавляет модель в локальную таблицу, генерирует событие create
     @table.index[ @id ] = @ if @id and not @table.index[ @id ]
-    unless @ in @table
+    unless @written()
       @table.push @
       @onCreate?()
       @Model.trigger "create.#{ @_name.lower() }", @
@@ -113,7 +116,7 @@ Nali.extend Model:
 
   remove: ->
     # удаляет модель из локальной таблицы, генерирует событие destroy
-    if @ in @table
+    if @written()
       @destroyed = true
       delete @table.index[ @id ]
       @table.splice @table.indexOf( @ ), 1
