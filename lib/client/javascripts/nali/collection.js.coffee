@@ -16,21 +16,21 @@ Nali.extend Collection:
     @clone model: model, filters: filters
 
   onModelCreated: ( extModel, model ) ->
-    @add model if model.isCorrect @filters
+    @add model if not @freezed and model.isCorrect @filters
     @
 
   onModelUpdated: ( extModel, model ) ->
     if model in @
-      if model.isCorrect @filters
+      if @freezed or model.isCorrect @filters
         @reorder()
         @trigger 'update.model', model
       else @remove model
-    else if model.isCorrect @filters
+    else if not @freezed and model.isCorrect @filters
       @add model
     @
 
   onModelDestroyed: ( model ) ->
-    @remove model
+    @remove model unless @freezed
     @
 
   adaptCollection: ->
@@ -46,7 +46,7 @@ Nali.extend Collection:
     @
 
   adaptation: ( apply, cancel ) ->
-    apply.call @, model for model in @
+    @each ( model ) -> apply.call @, model
     @adaptations.apply.push apply
     @adaptations.cancel.unshift cancel if cancel
     @
@@ -71,8 +71,12 @@ Nali.extend Collection:
     @
 
   removeAll: ->
-    delete @[ index ] for model, index in @
+    @each ( model ) -> @remove model
     @length = 0
+    @
+
+  each: ( callback ) ->
+    callback.call @, model, index for model, index in @
     @
 
   pluck: ( property ) ->
@@ -87,6 +91,19 @@ Nali.extend Collection:
 
   toArray: ->
     Array::slice.call @, 0
+
+  freeze: ->
+    @freezed = true
+    @
+
+  unfreeze: ->
+    @freezed = false
+    @
+
+  where: ( filters ) ->
+    result = []
+    result.push model for model in @ when model.isCorrect filters
+    result
 
   order: ( @ordering ) ->
     @reorder()
