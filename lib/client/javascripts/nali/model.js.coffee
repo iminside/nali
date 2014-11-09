@@ -88,9 +88,16 @@ Nali.extend Model:
       model.write()
     @
 
-  select: ( filters, success, failure ) ->
-    # отправляет на сервер запрос на выборку моделей по фильтру, вызывает success в случае успеха и failure при неудаче
-    @query @_name.lower() + 's.select', filters, success, failure if Object.keys( filters ).length
+  select: ( options ) ->
+    # отправляет на сервер запрос на выборку моделей
+    obj = {}
+    if typeof options is 'object'
+      obj.selector = Object.keys( options )[0]
+      obj.params   = options[ obj.selector ]
+    else
+      obj.selector = options
+      obj.params   = {}
+    @query @_name.lower() + 's.select', obj
     @
 
   write: ->
@@ -131,6 +138,7 @@ Nali.extend Model:
         @updated = updated if updated
         @onUpdate? changed
         @trigger 'update', changed
+        @Model.trigger "update.#{ @_name.lower() }", @
     @
 
   updateAttribute: ( name, value ) ->
@@ -163,6 +171,9 @@ Nali.extend Model:
       attributes[ key ] = value for key, value of filters when typeof value in [ 'number', 'string' ]
       collection.add @new attributes
     collection
+
+  all: ->
+    @where id: /./
 
   # работа с аттрибутами
 
