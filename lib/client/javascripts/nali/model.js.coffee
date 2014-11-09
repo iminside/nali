@@ -17,6 +17,7 @@ Nali.extend Model:
   attributes:  {}
   updated:     0
   noticesWait: []
+  destroyed:   false
 
   adapt: ->
     for name, method of @ when /^_\w+/.test name
@@ -113,6 +114,7 @@ Nali.extend Model:
   remove: ->
     # удаляет модель из локальной таблицы, генерирует событие destroy
     if @ in @table
+      @destroyed = true
       delete @table.index[ @id ]
       @table.splice @table.indexOf( @ ), 1
       @trigger 'destroy'
@@ -142,7 +144,7 @@ Nali.extend Model:
     @
 
   updateAttribute: ( name, value ) ->
-    # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.{ attributeName }
+    # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.attributeName
     value = @normalizeValue value
     if @attributes[ name ] isnt value and @isValidAttributeValue( name, value )
       @attributes[ name ] = value
