@@ -51,13 +51,14 @@ Nali.extend Collection:
     @adaptations.cancel.unshift cancel if cancel
     @
 
-  add: ( model ) ->
-    Array::push.call @, model
-    @adaptModel  model
-    @subscribeTo model, 'destroy', @onModelDestroyed
-    @reorder()
-    @trigger 'update.length.add', model
-    @trigger 'update.length', 'add', model
+  add: ( models... ) ->
+    for model in [].concat models...
+      Array::push.call @, model
+      @adaptModel  model
+      @subscribeTo model, 'destroy', @onModelDestroyed
+      @reorder()
+      @trigger 'update.length.add', model
+      @trigger 'update.length', 'add', model
     @
 
   remove: ( model ) ->
@@ -74,12 +75,18 @@ Nali.extend Collection:
     @length = 0
     @
 
+  pluck: ( property ) ->
+    model[ property ] for model in @
+
   indexOf: ( model ) ->
     Array::indexOf.call @, model
 
   sort: ( sorter ) ->
     Array::sort.call @, sorter
     @
+
+  toArray: ->
+    Array::slice.call @, 0
 
   order: ( @ordering ) ->
     @reorder()
