@@ -314,7 +314,7 @@ Nali.extend Model:
       @[ name ] = @Collection.new model, ->
         return true for model in @[ through ] when model[ key ] is @
         false
-      @[ name ].add model[ key ] for model in @[ through ]
+      @[ name ].add @[ through ].pluck key
       @[ name ].subscribeTo @[ through ], 'update.length.add',    ( collection, model ) -> @add    model[ key ]
       @[ name ].subscribeTo @[ through ], 'update.length.remove', ( collection, model ) -> @remove model[ key ]
       @[ name ]
