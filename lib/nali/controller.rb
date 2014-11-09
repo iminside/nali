@@ -7,13 +7,17 @@ module Nali
     def self.included( base )
       base.extend self
       base.class_eval do
-        self.class_variable_set :@@befores, []
-        self.class_variable_set :@@afters,  []
+        self.class_variable_set :@@befores,   []
+        self.class_variable_set :@@afters,    []
+        self.class_variable_set :@@selectors, {}
         def self.befores
           self.class_variable_get :@@befores
         end
         def self.afters
           self.class_variable_get :@@afters
+        end
+        def self.selectors
+          self.class_variable_get :@@selectors
         end
       end
     end
@@ -38,7 +42,7 @@ module Nali
         permit_params options
         if ( model = model_class.new( params ) ).save
           trigger_success model.get_sync_params( client )[0]
-          model.sync client
+          client.sync model
         else trigger_failure end
       end
     end
@@ -54,18 +58,12 @@ module Nali
         end
       end
     end
-    
-    def select
-      model_class.where( params ).each { |model| client.sync model }
-      client.filters_add model_name, params
-    end
 
     def destroy
       if model = model_class.find_by_id( params[ :id ] )
         model.access_action( :destroy, client ) do |options|
           model.destroy()
-          trigger_success model.id 
-          model.sync
+          trigger_success model.id
         end
       else trigger_failure end
     end
@@ -101,11 +99,33 @@ module Nali
     def after_except( *methods, &closure )
       register_after closure: closure, except: methods
     end
+
+    def selector( name, &closure )
+      selectors[ name ] = closure
+    end
     
-    def runAction( name )
+    def select( name )
+      selected = nil
       self.runFilters name
-      self.send( name ) unless @stopped
+      if !@stopped and selector = self.class.selectors[ name ]
+        selected = instance_eval( &selector )
+      end
       self.runFilters name, :after
+      if !@stopped and selected and ( selected.is_a?( ActiveRecord::Relation ) or selected.is_a?( ActiveRecord::Base ) )
+        client.sync selected
+      end
+    end
+
+    def runAction( name )
+      if name == :select
+        selector = params[ :selector ].to_sym
+        @params  = params[ :params ]
+        self.select selector
+      else
+        self.runFilters name
+        self.send( name ) unless @stopped
+        self.runFilters name, :after
+      end
     end
     
     def stop
