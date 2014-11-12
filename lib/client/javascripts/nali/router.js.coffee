@@ -1,7 +1,7 @@
 Nali.extend Router:
 
   initialize: ->
-    @::expand redirect: ( args... ) => @go args...
+    @::expand redirect: ( args... ) => @redirect args...
     @
 
   routes:      {}
@@ -12,7 +12,7 @@ Nali.extend Router:
       event.preventDefault()
       event.stopPropagation()
       @saveHistory false
-      @go event.target.location.pathname
+      @redirect event.target.location.pathname
     @
 
   scanRoutes: ->
@@ -25,13 +25,13 @@ Nali.extend Router:
       @routes[ route ] = controller
     @
 
-  go: ( url = window.location.pathname, options = {} ) ->
+  redirect: ( url = window.location.pathname, options = {} ) ->
     if found = @findRoute @prepare( url ) or @prepare( @Application.defaultUrl )
       { controller, action, filters, params } = found
       params[ name ] = value for name, value in options
       controller.run action, filters, params
     else if @Application.notFoundUrl
-      @go @Application.notFoundUrl
+      @redirect @Application.notFoundUrl
     else console.warn "Not exists route to the address %s", url
     @
 

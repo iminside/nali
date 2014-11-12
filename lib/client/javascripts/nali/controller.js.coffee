@@ -63,6 +63,6 @@ Nali.extend Controller:
     @
 
   redirect: ( args... ) ->
-    @Router.go args...
+    @Router.redirect args...
     @stop()
     @
