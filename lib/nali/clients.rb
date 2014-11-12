@@ -19,12 +19,13 @@ module Nali
       if message[ :ping ]
         client.send_json action: :pong
       else
-        if controller = Object.const_get( message[ :controller ].capitalize + 'Controller' )
+        name = message[ :controller ].capitalize + 'Controller'
+        if Math.const_defined?( name ) and controller = Object.const_get( name )
           controller = controller.new( client, message )
           if controller.respond_to?( action = message[ :action ].to_sym )
             controller.runAction action
           else puts "Action #{ action } not exists in #{ controller }" end
-        else puts "Controller #{ controller } not exists" end
+        else puts "Controller #{ name } not exists" end
         on_message( client, message ) if respond_to?( :on_message )
       end
     end
