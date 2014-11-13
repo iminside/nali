@@ -34,9 +34,10 @@ Nali.extend View:
     @
 
   show: ( insertTo = @insertTo() ) ->
-    @prepareElement().draw().bindEvents()
+    @prepareElement()
     unless @visible
       @runModelCallback 'beforeShow'
+      @draw().bindEvents()
       @runAssistants 'show'
       @subscribeTo @model, 'update',  @onSourceUpdated
       @subscribeTo @model, 'destroy', @onSourceDestroyed
@@ -45,6 +46,8 @@ Nali.extend View:
       setTimeout ( => @onShow() ), 5 if @onShow?
       @visible = true
       @runModelCallback 'afterShow'
+    else
+      @draw()
     @
 
   hide: ( delay = 0 ) ->
