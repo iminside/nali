@@ -105,7 +105,7 @@ Nali.extend View:
       obj = if match[1].length is 1 then @ else @model
       if obj[ method ]? and typeof obj[ method ] is 'function' then obj[ method ] params
       else console.warn "Method %s not exists", method
-    else @Router.go url, params
+    else @redirect url, params
     @
 
   formToHash: ( form ) ->
