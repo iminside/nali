@@ -103,9 +103,8 @@ Nali.extend Collection:
     @
 
   where: ( filters ) ->
-    result = []
-    result.push model for model in @ when model.isCorrect filters
-    result
+    filters[ name ] = value for name, value of @filters
+    @model.where filters
 
   order: ( @ordering ) ->
     @reorder()
