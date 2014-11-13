@@ -149,8 +149,8 @@ Nali.extend Model:
   updateAttribute: ( name, value ) ->
     # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.attributeName
     value = @normalizeValue value
-    if @attributes[ name ] isnt value and @isValidAttributeValue( name, value )
-      @attributes[ name ] = value
+    if @[ name ] isnt value and @isValidAttributeValue( name, value )
+      @[ name ] = value
       @[ 'onUpdate' + name.capitalize() ]?()
       @trigger "update.#{ name }"
       true
@@ -216,7 +216,11 @@ Nali.extend Model:
     # проверяет соответствие аттрибутов модели определенному набору фильтров, возвращает true либо false
     return filters.call @ if typeof filters is 'function'
     return false unless Object.keys( filters ).length
-    return false for name, filter of filters when not @isCorrectAttribute @attributes[ name ], filter
+    for name, filter of filters
+      result = if name is 'correct' and typeof filter is 'function'
+        filter.call @
+      else @isCorrectAttribute @[ name ], filter
+      return false unless result
     return true
 
   isCorrectAttribute: ( attribute, filter ) ->
@@ -228,6 +232,8 @@ Nali.extend Model:
       '' + attribute is filter
     else if typeof filter is 'number'
       + attribute is filter
+    else if typeof filter is 'boolean'
+      attribute is filter
     else if filter instanceof Array
       '' + attribute in filter or + attribute in filter
     else false
@@ -321,7 +327,7 @@ Nali.extend Model:
     # связанных с текущей через модель through
     @getter name, =>
       delete @[ name ]
-      @[ name ] = model.where ->
+      @[ name ] = model.where correct: ->
         return true for model in @[ through ] when model[ key ] is @
         false
       @[ name ].subscribeTo @[ through ], 'update.length.add',    ( collection, model ) -> @add    model[ key ]
