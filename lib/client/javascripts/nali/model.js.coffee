@@ -321,7 +321,7 @@ Nali.extend Model:
     # связанных с текущей через модель through
     @getter name, =>
       delete @[ name ]
-      @[ name ] = @Collection.new model, ->
+      @[ name ] = model.where ->
         return true for model in @[ through ] when model[ key ] is @
         false
       @[ name ].subscribeTo @[ through ], 'update.length.add',    ( collection, model ) -> @add    model[ key ]
