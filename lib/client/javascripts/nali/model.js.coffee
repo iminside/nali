@@ -170,7 +170,6 @@ Nali.extend Model:
   where: ( filters ) ->
     # возвращает коллекцию моделей соответствующих фильтру
     collection = @Collection.new @, filters
-    collection.add model for model in @table when model.isCorrect filters
     if @forced and not collection.length
       attributes = {}
       attributes[ key ] = value for key, value of filters when typeof value in [ 'number', 'string' ]
@@ -178,7 +177,13 @@ Nali.extend Model:
     collection
 
   all: ->
+    # возвращает коллекцию всех моделей
     @where id: /./
+
+  each: ( callback ) ->
+    # применяет колбек ко всем моделям
+    callback.call @, model for model in @table
+    @
 
   # работа с аттрибутами
 
@@ -319,7 +324,6 @@ Nali.extend Model:
       @[ name ] = @Collection.new model, ->
         return true for model in @[ through ] when model[ key ] is @
         false
-      @[ name ].add @[ through ].pluck key
       @[ name ].subscribeTo @[ through ], 'update.length.add',    ( collection, model ) -> @add    model[ key ]
       @[ name ].subscribeTo @[ through ], 'update.length.remove', ( collection, model ) -> @remove model[ key ]
       @[ name ]
