@@ -10,6 +10,7 @@ Nali.extend Collection:
     @adaptations = apply: [], cancel: []
     @ordering    = {}
     @adaptCollection()
+    @model.each ( model ) => @add model if model.isCorrect @filters
     @
 
   new: ( model, filters ) ->
