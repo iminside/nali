@@ -34,7 +34,7 @@ Nali.extend Model:
         @views[ short = view._shortName ] = view
         shortCap = short.capitalize()
         unless @[ viewMethod = 'view' + shortCap ]? then @[ viewMethod ] = -> @view short
-        unless @[ showMethod = 'show' + shortCap ]? then @[ showMethod ] = ( insertTo ) -> @show short, insertTo
+        unless @[ showMethod = 'show' + shortCap ]? then @[ showMethod ] = -> @show short
         unless @[ hideMethod = 'hide' + shortCap ]? then @[ hideMethod ] = -> @hide short
     @
 
