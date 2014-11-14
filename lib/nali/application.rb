@@ -25,7 +25,7 @@ module Nali
       client.append_path File.join( Nali.path, 'client/javascripts' )
 
       %w( app/client/templates app/client/stylesheets app/client/javascripts lib/client/stylesheets
-          lib/client/javascripts public/client vendor/client/stylesheets vendor/client/javascripts
+          lib/client/javascripts vendor/client/stylesheets vendor/client/javascripts
       ).each { |path| client.append_path File.join( root, path ) }
 
       Sprockets::Helpers.configure do |config|
