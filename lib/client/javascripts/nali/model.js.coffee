@@ -32,10 +32,10 @@ Nali.extend Model:
     for name, view of @View.extensions when name.indexOf( @_name ) >= 0
       do ( name, view ) =>
         @views[ short = view._shortName ] = view
-        unless @[ short ]?
-          @[ short ] = ->
-            @show short
-            @
+        shortCap = short.capitalize()
+        unless @[ viewMethod = 'view' + shortCap ]? then @[ viewMethod ] = -> @view short
+        unless @[ showMethod = 'show' + shortCap ]? then @[ showMethod ] = ( insertTo ) -> @show short, insertTo
+        unless @[ hideMethod = 'hide' + shortCap ]? then @[ hideMethod ] = -> @hide short
     @
 
   notice: ( params ) ->
