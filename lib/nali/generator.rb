@@ -24,6 +24,7 @@ module Nali
       dirs << File.join( target_path, 'db/migrate' )
       dirs << File.join( target_path, 'lib' )
       dirs << File.join( target_path, 'public' )
+      dirs << File.join( target_path, 'public/client' )
       dirs << File.join( target_path, 'tmp' )
       dirs << File.join( target_path, 'vendor' )
       dirs << File.join( target_path, 'config/initializers' )

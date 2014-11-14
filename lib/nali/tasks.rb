@@ -20,19 +20,27 @@ module Nali
           
           compiled_path = File.join @settings.public_folder, 'client'
           Dir[ compiled_path + '/*' ]
+          .select { |file| file =~ /.*?\.gz/ }
+          .each { |file| File.delete file }
+          Dir[ compiled_path + '/*' ]
           .select { |file| file =~ /application.*?\.html/ }
           .each do |file| 
             filename    = File.basename( file ).split '.' 
-            filename[0] = 'application'
+            filename[0] = 'index'
             filename    = filename.join '.'
-            File.rename file, File.join( compiled_path, filename )
+            File.rename file, File.join( @settings.public_folder, filename )
           end
           puts 'Client files compiled'
         end
         
         desc 'Remove compiled client files'
         task :clean do
-          FileUtils.rm_rf File.join( @settings.public_folder, 'client' )
+          compiled_path = File.join @settings.public_folder, 'client'
+          Dir[ compiled_path + '/*' ]
+          .select { |file| file =~ /(application|manifest).*?\.(js|css|json)/ }
+          .each { |file| File.delete file }
+          index = File.join( @settings.public_folder, 'index.html' )
+          File.delete( index ) if File.exists?( index )
           puts 'Compiled client files removed'
         end
         
