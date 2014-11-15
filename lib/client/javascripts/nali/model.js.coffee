@@ -34,7 +34,7 @@ Nali.extend Model:
         @views[ short = view._shortName ] = view
         shortCap = short.capitalize()
         unless @[ viewMethod = 'view' + shortCap ]? then @[ viewMethod ] = -> @view short
-        unless @[ showMethod = 'show' + shortCap ]? then @[ showMethod ] = -> @show short
+        unless @[ showMethod = 'show' + shortCap ]? then @[ showMethod ] = ( insertTo ) -> @show short, insertTo
         unless @[ hideMethod = 'hide' + shortCap ]? then @[ hideMethod ] = -> @hide short
     @
 
@@ -155,6 +155,11 @@ Nali.extend Model:
       @trigger "update.#{ name }"
       true
     else false
+
+  upgrade: ( attributes, success, failure ) ->
+    # обновляет атрибуты модели и сохраняет её на сервер
+    @update( attributes ).save success, failure
+    @
 
   destroy: ( success, failure ) ->
     # отправляет на сервер запрос на удаление модели, вызывает success в случае успеха и failure при неудаче
