@@ -8,9 +8,7 @@ module Nali
 
     configure do |config|
 
-#      Your configure settings
-#      config.client.append_path 'public/client/images'
-#      Add folder to sprockets
+      #Your configure settings for all environments
 
     end
 
