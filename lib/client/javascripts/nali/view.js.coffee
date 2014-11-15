@@ -98,18 +98,28 @@ Nali.extend View:
     @runUrl event.currentTarget.getAttribute( 'action' ), @formToHash event.currentTarget
     @
 
-  runUrl: ( url, params = {} ) ->
+  runUrl: ( url, params ) ->
     if match = url.match /^(@@?)(.+)/
-      [ method, data ] = match[2].split '?'
-      if data
-        for specification in data.split /&|&amp;/ when specification
-          [ name, value ] = specification.split '='
-          params[ name ]  = value
-      obj = if match[1].length is 1 then @ else @model
-      if obj[ method ]? and typeof obj[ method ] is 'function' then obj[ method ] params
-      else console.warn "Method %s not exists", method
+      [ chain, segments... ] = match[2].split '/'
+      if result = @analizeChain chain, ( if match[1].length is 1 then @ else @model )
+        [ source, method ] = result
+        args = @parseUrlSegments segments
+        args.unshift params if params
+        source[ method ] args...
+      else console.warn "Method %s not exists", chain
     else @redirect url, params
     @
+
+  parseUrlSegments: ( segments ) ->
+    params = []
+    for segment in segments
+      [ name, value ] = segment.split ':'
+      if value
+        last = params[ params.length - 1 ]
+        params.push last = {} if typeof last isnt 'object'
+        last[ name ] = value
+      else params.push name
+    params
 
   formToHash: ( form ) ->
     params = {}
@@ -286,20 +296,19 @@ Nali.extend View:
         source.subscribe? @, "update.#{ property }", @onSourceUpdated if source isnt @model
         if match[2] is '?'
           if source[ property ] then property else ''
-        else source[ property ]
+        else if source[ property ]? then source[ property ] else ''
       else ''
     else if match = sub.match /^[=|\+](\w+)$/
       @helpers?[ match[1] ]?.call @
     else undefined
 
-  analizeChain: ( chain ) ->
+  analizeChain: ( chain, source = @model ) ->
     segments = chain.split '.'
     property = segments.pop()
-    source   = @model
     for segment in segments
       if segment of source then source = source[ segment ]
       else break
     unless property of source
-      console.warn "%s: chain \"%s\" is invalid, \"%s\" is not Object", @_name, chain, segment
+      console.warn "%s: chain \"%s\" is invalid", @_name, chain
       return null
     [ source, property ]
