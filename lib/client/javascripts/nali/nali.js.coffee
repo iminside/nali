@@ -1,5 +1,3 @@
-window.__ = ( args... ) -> console.log args...
-
 window.Nali =
 
   _name:      'Nali'
