@@ -16,3 +16,5 @@ String::camel = ->
 String::underscore = ->
   str = @replace /([A-Z])/g, ( match ) -> '_' + match.lower()
   if str[ 0...1 ] is '_' then str[ 1.. ] else str
+
+window.__ = ( args... ) -> console.log args...
