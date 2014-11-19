@@ -42,7 +42,6 @@ Nali.extend View:
       @subscribeTo @model, 'update',  @onSourceUpdated
       @subscribeTo @model, 'destroy', @onSourceDestroyed
       @element.appendTo insertTo
-      @showRelations()
       setTimeout ( => @onShow() ), 5 if @onShow?
       @visible = true
       @runModelCallback 'afterShow'
@@ -73,19 +72,6 @@ Nali.extend View:
 
   runModelCallback: ( type ) ->
     @model[ type ]?[ @_shortName ]?.call @model
-    @
-
-  showRelations: ->
-    for { selector, name, view } in @relationsMap
-      if ( relation = @model[ name ] )?
-        insertTo = @element.find selector
-        if relation.childOf 'Collection'
-          relation.show view, insertTo, true
-          relation.subscribeTo @, 'hide', relation.reset
-        else
-          view = relation.show view, insertTo
-          view.subscribeTo @, 'hide', view.hide
-      else console.warn "Relation %s does not exist of model %O", name, @model
     @
 
   runLink: ( event ) ->
@@ -181,18 +167,9 @@ Nali.extend View:
         .replace( /{\s*yield\s*}/g, '<div class="yield"></div>' )
       unless RegExp( "^<[^>]+" + @_name ).test @template
         @template = "<div class=\"#{ @_name }\">#{ @template }</div>"
-      @parseRelations()
+      @parseAssistants()
       container.parentNode.removeChild container
     else console.warn 'Template %s not exists', @_name
-    @
-
-  parseRelations: ->
-    @relationsMap = []
-    @template = @template.replace  /{\s*(\w+) of @(\w+)\s*}/g, ( match, view, relation ) =>
-      className =  relation.capitalize() + view.capitalize() + 'Relation'
-      @relationsMap.push selector: '.' + className, name: relation, view: view
-      "<div class=\"#{ className }\"></div>"
-    @parseAssistants()
     @
 
   parseAssistants: ->
@@ -204,8 +181,11 @@ Nali.extend View:
     @
 
   scanAssistants: ( node, path = [] ) ->
-    if node.nodeType is 3 and /{\s*.+?\s*}/.test node.textContent
-      @assistantsMap.push nodepath: path, type: 'Text'
+    if node.nodeType is 3
+      if /^{\s*\w+ of @\w*\s*}$/.test( node.textContent.trim() ) and node.parentNode.childNodes.length is 1
+        @assistantsMap.push nodepath: path, type: 'Relation'
+      else if /{\s*.+?\s*}/.test node.textContent
+        @assistantsMap.push nodepath: path, type: 'Text'
     else if node.nodeName is 'ASSIST'
       @assistantsMap.push nodepath: path, type: 'Html'
     else
@@ -286,6 +266,19 @@ Nali.extend View:
         _node.off 'change'
     @
 
+  addRelationAssistant: ( node ) ->
+    [ match, name, chain ] = node.textContent.match /{\s*(\w+) of @(\w*)\s*}/
+    ( insertTo = node.parentNode ).removeChild node
+    segments = if chain.length then chain.split '.' else []
+    @assistants[ 'show' ].push ->
+      if relation = @getSource segments
+        if relation.childOf 'Collection'
+          relation.show name, insertTo, true
+          relation.subscribeTo @, 'hide', relation.reset
+        else
+          view = relation.show name, insertTo
+          view.subscribeTo @, 'hide', view.hide
+
   analize: ( value ) ->
     value.replace /{\s*(.+?)\s*}/g, ( match, sub ) => @analizeMatch sub
 
@@ -300,15 +293,18 @@ Nali.extend View:
       else ''
     else if match = sub.match /^[=|\+](\w+)$/
       @helpers?[ match[1] ]?.call @
-    else undefined
+    else sub
+
+  getSource: ( segments, source = @model ) ->
+    for segment in segments
+      if segment of source then source = source[ segment ]
+      else
+        console.warn "%s: chain \"%s\" is invalid, segment \"%s\" not exists in %O", @_name, segments.join( '.' ), segment, source
+        return null
+    source
 
   analizeChain: ( chain, source = @model ) ->
     segments = chain.split '.'
     property = segments.pop()
-    for segment in segments
-      if segment of source then source = source[ segment ]
-      else break
-    unless property of source
-      console.warn "%s: chain \"%s\" is invalid", @_name, chain
-      return null
+    return null unless source = @getSource segments, source
     [ source, property ]
