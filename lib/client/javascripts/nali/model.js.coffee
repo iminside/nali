@@ -12,8 +12,6 @@ Nali.extend Model:
     @views = {}
 
   tables:      {}
-  hasOne:      []
-  hasMany:     []
   attributes:  {}
   updated:     0
   noticesWait: []
