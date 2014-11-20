@@ -21,6 +21,9 @@ Nali.extend View:
     @redrawOn source, "update.#{ property }"
     source[ property ]
 
+  getMy: ( property ) ->
+    @getOf @model, property
+
   redrawOn: ( source, event ) ->
     @subscribeTo source, event, @onSourceUpdated
 
@@ -39,7 +42,6 @@ Nali.extend View:
       @runModelCallback 'beforeShow'
       @draw().bindEvents()
       @runAssistants 'show'
-      @subscribeTo @model, 'update',  @onSourceUpdated
       @subscribeTo @model, 'destroy', @onSourceDestroyed
       @element.appendTo insertTo
       setTimeout ( => @onShow() ), 5 if @onShow?
@@ -286,7 +288,7 @@ Nali.extend View:
     if match = sub.match /^@([\w\.]+)(\?)?$/
       if result = @analizeChain match[1]
         [ source, property ] = result
-        source.subscribe? @, "update.#{ property }", @onSourceUpdated if source isnt @model
+        source.subscribe? @, "update.#{ property }", @onSourceUpdated
         if match[2] is '?'
           if source[ property ] then property else ''
         else if source[ property ]? then source[ property ] else ''
