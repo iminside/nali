@@ -53,7 +53,7 @@ module Nali
   actions: {}"
             )
         end
-        File.open( File.join( Dir.pwd, "app/models/#{ filename }.rb" ), 'w' ) do |f|     
+        File.open( File.join( Dir.pwd, "app/server/models/#{ filename }.rb" ), 'w' ) do |f|
           f.write( 
 "class #{ classname } < ActiveRecord::Base
 
@@ -66,7 +66,7 @@ module Nali
 end" 
             )
         end
-        File.open( File.join( Dir.pwd, "app/controllers/#{ filename }s_controller.rb" ), 'w' ) do |f|     
+        File.open( File.join( Dir.pwd, "app/server/controllers/#{ filename }s_controller.rb" ), 'w' ) do |f|
           f.write( 
 "class #{ classname }sController < ApplicationController
   
@@ -75,7 +75,7 @@ end"
 end" 
             )
         end
-        File.open( File.join( Dir.pwd, "app/models/access.yml" ), 'a' ) do |f|     
+        File.open( File.join( Dir.pwd, "app/server/models/access.yml" ), 'a' ) do |f|
           f.write( 
 "
 
@@ -91,9 +91,9 @@ end"
         FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
         puts "Created: app/client/javascripts/models/#{ filename }.js.coffee"
         puts "Created: app/client/javascripts/controllers/#{ filename }s.js.coffee"
-        puts "Created: app/models/#{ filename }.rb"
-        puts "Created: app/controllers/#{ filename }s_controller.rb"
-        puts "Updated: app/models/access.yml"
+        puts "Created: app/server/models/#{ filename }.rb"
+        puts "Created: app/server/controllers/#{ filename }s_controller.rb"
+        puts "Updated: app/server/models/access.yml"
       else puts 'Please go to the application folder' end
     end
         
