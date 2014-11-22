@@ -28,7 +28,7 @@ Nali.extend View:
     @subscribeTo source, event, @onSourceUpdated
 
   insertTo: ->
-    if ( layout = @layout() )?.childOf? 'View' then layout.show().element.find '.yield'
+    if ( layout = @layout() )?.childOf? 'View' then layout.show().yield
     else @Application.htmlContainer
 
   draw: ->
@@ -166,7 +166,6 @@ Nali.extend View:
     if container = document.querySelector '#' + @_name.underscore()
       @template = container.innerHTML.trim().replace( /\s+/g, ' ' )
         .replace( /({\s*\+.+?\s*})/g, ' <assist>$1</assist>' )
-        .replace( /{\s*yield\s*}/g, '<div class="yield"></div>' )
       unless RegExp( "^<[^>]+" + @_name ).test @template
         @template = "<div class=\"#{ @_name }\">#{ @template }</div>"
       @parseAssistants()
@@ -184,7 +183,9 @@ Nali.extend View:
 
   scanAssistants: ( node, path = [] ) ->
     if node.nodeType is 3
-      if /^{\s*\w+ of @\w*\s*}$/.test( node.textContent.trim() ) and node.parentNode.childNodes.length is 1
+      if /{\s*yield\s*}/.test( node.textContent.trim() ) and node.parentNode.childNodes.length is 1
+        @assistantsMap.push nodepath: path, type: 'Yield'
+      else if /^{\s*\w+ of @\w*\s*}$/.test( node.textContent.trim() ) and node.parentNode.childNodes.length is 1
         @assistantsMap.push nodepath: path, type: 'Relation'
       else if /{\s*.+?\s*}/.test node.textContent
         @assistantsMap.push nodepath: path, type: 'Text'
@@ -267,6 +268,9 @@ Nali.extend View:
       @assistants[ 'hide' ].push ->
         _node.off 'change'
     @
+
+  addYieldAssistant: ( node ) ->
+    ( @yield = node.parentNode ).removeChild node
 
   addRelationAssistant: ( node ) ->
     [ match, name, chain ] = node.textContent.match /{\s*(\w+) of @(\w*)\s*}/
