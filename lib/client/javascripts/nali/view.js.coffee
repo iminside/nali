@@ -83,7 +83,7 @@ Nali.extend View:
 
   runForm: ( event ) ->
     event.preventDefault()
-    @runUrl event.currentTarget.getAttribute( 'action' ), @formToHash event.currentTarget
+    @runUrl event.currentTarget.getAttribute( 'action' ), form2js event.currentTarget, '.', false
     @
 
   runUrl: ( url, params ) ->
@@ -107,17 +107,6 @@ Nali.extend View:
         params.push last = {} if typeof last isnt 'object'
         last[ name ] = value
       else params.push name
-    params
-
-  formToHash: ( form ) ->
-    params = {}
-    for element in form.elements
-      if name = element.name or element.id
-        property = ( keys = name.match /[^\[\]]+/g ).pop()
-        target   = params
-        for key in keys
-          target = if target[ key ] instanceof Object then target[ key ] else target[ key ] = {}
-        target[ property ] = element.value
     params
 
   parseEvents: ->
