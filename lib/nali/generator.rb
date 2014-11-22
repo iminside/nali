@@ -122,6 +122,8 @@ end"
 
   helpers: {}
 
+  onDraw:  ->
+
   onShow:  ->
 
   onHide:  ->"
