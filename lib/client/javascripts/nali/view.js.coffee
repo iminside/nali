@@ -100,7 +100,7 @@ Nali.extend View:
 
   parseUrlSegments: ( segments ) ->
     params = []
-    for segment in segments
+    for segment in segments when segment isnt ''
       [ name, value ] = segment.split ':'
       if value
         last = params[ params.length - 1 ]
