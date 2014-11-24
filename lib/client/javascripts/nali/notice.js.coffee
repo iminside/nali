@@ -8,13 +8,13 @@ Nali.Model.extend Notice:
     params
 
   info: ( params ) ->
-    @new( @prepare params ).show 'info'
+    @new( @prepare params ).showInfo()
 
   warning: ( params ) ->
-    @new( @prepare params ).show 'warning'
+    @new( @prepare params ).showWarning()
 
   error:   ( params ) ->
-    @new( @prepare params ).show 'error'
+    @new( @prepare params ).showError()
 
 
 Nali.View.extend
