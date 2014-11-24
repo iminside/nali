@@ -58,13 +58,6 @@ Nali.extend Model:
     @setRelations()
     @
 
-  force: ( params = {} ) ->
-    # создает новую модель с заданными атрибутами
-    attributes         = @defaultAttributes()
-    attributes[ name ] = value for name, value of params
-    attributes[ name ] = @normalizeValue value for name, value of attributes
-    @clone( attributes: attributes ).accessing()
-
   save: ( success, failure ) ->
     # отправляет на сервер запрос на сохранение модели, вызывает success в случае успеха и failure при неудаче
     if @isValid()
@@ -125,7 +118,9 @@ Nali.extend Model:
 
   new: ( attributes ) ->
     # создает модель, не сохраняя её на сервере
-    @force attributes
+    model = @clone( attributes: @defaultAttributes() ).accessing()
+    model[ name ] = @normalizeValue value for name, value of attributes
+    model
 
   create: ( attributes, success, failure ) ->
     # создает модель, и сохраняет её на сервере, вызывает success в случае успеха и failure при неудаче
@@ -203,8 +198,8 @@ Nali.extend Model:
     attributes = id: @guid()
     for name, value of @attributes
       if value instanceof Object
-        attributes[ name ] = if value.default? then value.default else null
-      else attributes[ name ] = value
+        attributes[ name ] = if value.default? then @normalizeValue value.default else null
+      else attributes[ name ] = @normalizeValue value
     attributes
 
   normalizeValue: ( value ) ->
