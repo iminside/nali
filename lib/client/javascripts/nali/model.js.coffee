@@ -136,7 +136,7 @@ Nali.extend Model:
     if not updated or updated > @updated
       @created = created if created
       changed = []
-      changed.push name for name, value of attributes when @updateAttribute name, value
+      changed.push name for name, value of attributes when @updateProperty name, value
       if changed.length
         @updated = updated if updated
         @onUpdate? changed
@@ -144,8 +144,8 @@ Nali.extend Model:
         @Model.trigger "update.#{ @_name.lower() }", @
     @
 
-  updateAttribute: ( name, value ) ->
-    # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.attributeName
+  updateProperty: ( name, value ) ->
+    # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.propertyName
     value = @normalizeValue value
     if @[ name ] isnt value and @isValidAttributeValue( name, value )
       @[ name ] = value
@@ -390,7 +390,7 @@ Nali.extend Model:
 
   isValidAttributeValue: ( name, value ) ->
     # проверяет валидно ли значение для определенного атрибута модели, вызывается при проверке
-    # валидности модели, а также в методе updateAttribute() перед изменением значения атрибута, если значение
+    # валидности модели, а также в методе updateProperty() перед изменением значения атрибута, если значение
     # валидно то вызов model.isValidAttributeValue( name, value )? вернет true, иначе false
     for validation, tester of @validations when ( filter = @::attributes[ name ]?[ validation ] )?
       unless tester.call @, value, filter
