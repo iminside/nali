@@ -33,10 +33,10 @@ module Nali
     end
     
     def save
-      params[ :id ].to_i.to_s == params[ :id ].to_s ? update : create
+      params[ :id ].to_i.to_s == params[ :id ].to_s ? _update : _create
     end
     
-    def create
+    def _create
       model = model_class.new params 
       model.access_action( :create, client ) do |options|
         permit_params options
@@ -47,7 +47,7 @@ module Nali
       end
     end
     
-    def update
+    def _update
       if model = model_class.find_by_id( params[ :id ] )
         model.access_action( :update, client ) do |options|
           permit_params options
