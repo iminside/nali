@@ -54,18 +54,19 @@ Nali.extend View:
   hide: ( delay = 0 ) ->
     if @visible
       @runModelCallback 'beforeHide'
-      @hideDelay = delay if typeof( delay ) is 'number' and delay
       @onHide?()
       @trigger 'hide'
       @runAssistants 'hide'
-      @hideElement()
+      @hideElement delay or @hideDelay
       @destroyObservation()
       @visible = false
       @runModelCallback 'afterHide'
     @
 
-  hideElement: ->
-    if @hideDelay? then setTimeout ( => @removeElement() ), @hideDelay else @removeElement()
+  hideElement: ( delay ) ->
+    if delay and typeof( delay ) is 'number'
+      setTimeout ( => @removeElement() ), delay
+    else @removeElement()
     @
 
   removeElement: ->
