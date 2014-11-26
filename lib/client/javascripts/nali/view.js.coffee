@@ -229,7 +229,7 @@ Nali.extend View:
       _node = @_ node
 
       updateSource = ->
-        ( params = {} )[ property ] = node.value
+        ( params = {} )[ property ] = if node.type is 'checkbox' and !node.checked then null else node.value
         source.update params
         source.save() unless node.form?
 
@@ -242,7 +242,7 @@ Nali.extend View:
         when node.type in [ 'checkbox', 'radio' ]
           [
             -> node.checked = source[ property ] + '' is node.value
-            -> _node.on 'change', => updateSource.call @ if node.checked is true
+            -> _node.on 'change', => updateSource.call @ if node.type is 'checkbox' or node.checked is true
           ]
         when node.type is 'select-one'
           [
