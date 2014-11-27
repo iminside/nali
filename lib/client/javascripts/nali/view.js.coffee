@@ -45,6 +45,7 @@ Nali.extend View:
       @subscribeTo @model, 'destroy', @onSourceDestroyed
       @element.appendTo insertTo
       setTimeout ( => @onShow() ), 5 if @onShow?
+      @trigger 'show'
       @visible = true
       @runModelCallback 'afterShow'
     else
