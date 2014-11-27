@@ -391,7 +391,7 @@ Nali.extend Model:
     for validation, tester of @validations when ( filter = @::attributes[ name ]?[ validation ] )?
       unless tester.call @, value, filter
         console.warn 'Attribute %s of model %O has not validate %s', name, @, validation
-        for type in [ 'info', 'warning', 'error' ] when ( message = @::attributes[ name ][ type ] )?
-          @Notice[ type ] message: message
+        if notice = @::attributes[ name ].notice
+          @Notice[ type ] params for type, params of notice
         return false
     true
