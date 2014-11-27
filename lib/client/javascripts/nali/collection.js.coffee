@@ -10,7 +10,11 @@ Nali.extend Collection:
     @adaptations = apply: [], cancel: []
     @ordering    = {}
     @adaptCollection()
-    @model.each ( model ) => @add model if model.isCorrect @filters
+    @refilter()
+    @
+
+  refilter: ->
+    @model.each ( model ) => @add model if model.isCorrect( @filters ) and not ( model in @ )
     @
 
   new: ( model, filters ) ->
@@ -100,6 +104,7 @@ Nali.extend Collection:
 
   unfreeze: ->
     @freezed = false
+    @refilter()
     @
 
   where: ( filters ) ->
