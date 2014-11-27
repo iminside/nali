@@ -14,7 +14,7 @@ Nali.extend Model:
   tables:      {}
   attributes:  {}
   updated:     0
-  noticesWait: []
+  callStack:   []
   destroyed:   false
 
   adapt: ->
@@ -36,18 +36,18 @@ Nali.extend Model:
         unless @[ hideMethod = 'hide' + shortCap ]? then @[ hideMethod ] = -> @hide short
     @
 
-  notice: ( params ) ->
-    # добавляет уведомление в очередь на выполнение, запускает выполнение очереди
-    @noticesWait.push params
-    @runNotices()
+  callStackAdd: ( params ) ->
+    # добавляет задачу в очередь на выполнение, запускает выполнение очереди
+    @callStack.push params
+    @runStack()
     @
 
-  runNotices: ->
-    # запускает выполнение уведомлений на существующих моделях
-    for item, index in @noticesWait[ 0.. ]
+  runStack: ->
+    # запускает выполнение задач у существующих моделей
+    for item, index in @callStack[ 0.. ]
       if model = @extensions[ item.model ].find item.id
-        model[ item.notice ] item.params
-        @noticesWait.splice @noticesWait.indexOf( item ), 1
+        model[ item.method ] item.params
+        @callStack.splice @callStack.indexOf( item ), 1
     @
 
   # работа с моделями
@@ -102,7 +102,7 @@ Nali.extend Model:
       @table.push @
       @onCreate?()
       @Model.trigger "create.#{ @_name.lower() }", @
-      @Model.runNotices()
+      @Model.runStack()
     @
 
   remove: ->

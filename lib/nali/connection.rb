@@ -56,16 +56,13 @@ module EventMachine
         end
       end
         
-      def notice( name, *args )
-        message = { action: :notice, notice: name }
-        if args[0].is_a?( ActiveRecord::Base )
-          model, params     = args
-          message[ :model ] = "#{ model.class.name }.#{ model.id }"
-        else
-          params = args[0]
-        end
-        message[ :params ] = params
-        send_json message
+      def call_method( method, model, params = nil )
+        model = "#{ model.class.name }.#{ model.id }" if model.is_a?( ActiveRecord::Base )
+        send_json action: 'callMethod', model: model, method: method, params: params
+      end
+
+      def notice( method, params = nil )
+        call_method method, 'Notice', params
       end
         
       def info( params )

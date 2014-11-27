@@ -66,9 +66,9 @@ module Nali
       watches.flatten.each { |client| client.watch self }
       clients.each { |client| client.sync self if client.watch?( self ) }
     end
-      
-    def notice( name, params )
-      clients.each { |client| client.notice self, name, params if client.watch?( self ) }
+
+    def call_method( name, params )
+      clients.each { |client| client.call_method self, name, params if client.watch?( self ) }
     end
     
     private

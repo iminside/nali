@@ -53,11 +53,11 @@ Nali.extend Connection:
     @Model.sync message.params
     @
 
-  notice: ( { model, notice, params } ) ->
-    if model?
+  callMethod: ( { model, method, params } ) ->
+    if model is 'Notice' then @Notice[ method ] params
+    else
       [ model, id ] = model.split '.'
-      @Model.notice model: model, id: id, notice: notice, params: params
-    else @Notice[ notice ] params
+      @Model.callStackAdd model: model, id: id, method: method, params: params
     @
 
   success: ( message ) ->
