@@ -20,11 +20,11 @@ Nali.extend Collection:
   new: ( model, filters ) ->
     @clone model: model, filters: filters
 
-  onModelCreated: ( extModel, model ) ->
+  onModelCreated: ( model ) ->
     @add model if not @freezed and model.isCorrect @filters
     @
 
-  onModelUpdated: ( extModel, model ) ->
+  onModelUpdated: ( model ) ->
     if model.written()
       if model in @
         if @freezed or model.isCorrect @filters

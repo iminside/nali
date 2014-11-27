@@ -111,7 +111,7 @@ Nali.extend Model:
       @destroyed = true
       delete @table.index[ @id ]
       @table.splice @table.indexOf( @ ), 1
-      @trigger 'destroy'
+      @trigger 'destroy', @
       @onDestroy?()
       @unsubscribeAll()
     @
@@ -328,8 +328,8 @@ Nali.extend Model:
       @[ name ] = model.where correct: ->
         return true for model in @[ through ] when model[ key ] is @
         false
-      @[ name ].subscribeTo @[ through ], 'update.length.add',    ( collection, model ) -> @add    model[ key ]
-      @[ name ].subscribeTo @[ through ], 'update.length.remove', ( collection, model ) -> @remove model[ key ]
+      @[ name ].subscribeTo @[ through ], 'update.length.add',    ( model ) -> @add    model[ key ]
+      @[ name ].subscribeTo @[ through ], 'update.length.remove', ( model ) -> @remove model[ key ]
       @[ name ]
     @
 

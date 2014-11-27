@@ -128,5 +128,5 @@ window.Nali =
     @
 
   trigger: ( event, args... ) ->
-    item[2].call item[0], @, args... for item in @observers[..] when item[1] is event
+    item[2].call item[0], args... for item in @observers[..] when item[1] is event
     @
