@@ -349,10 +349,10 @@ Nali.extend Model:
     # функция возвращает объект вида при успехе либо null при неудаче
     if ( view = @view( name ) )? then view.show insertTo else null
 
-  hide: ( name ) ->
+  hide: ( name, delay ) ->
     # удаляет html-код вида со страницы
     # функция возвращает объект вида при успехе либо null при неудаче
-    if ( view = @view( name ) )? then view.hide() else null
+    if ( view = @view( name ) )? then view.hide delay else null
 
   # валидации
 
