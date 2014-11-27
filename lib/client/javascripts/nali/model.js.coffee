@@ -168,12 +168,7 @@ Nali.extend Model:
 
   where: ( filters ) ->
     # возвращает коллекцию моделей соответствующих фильтру
-    collection = @Collection.new @, filters
-    if @forced and not collection.length
-      attributes = {}
-      attributes[ key ] = value for key, value of filters when typeof value in [ 'number', 'string' ]
-      collection.add @new attributes
-    collection
+    @Collection.new @, filters
 
   all: ->
     # возвращает коллекцию всех моделей
