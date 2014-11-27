@@ -161,6 +161,10 @@ Nali.extend Collection:
         model.hide viewName
     @
 
+  hide: ( viewName, delay ) ->
+    model.hide viewName, delay for model in @
+    @
+
   prepareViewToShow: ( view ) ->
     unless view in @::toShowViews
       @::toShowViews.push view
