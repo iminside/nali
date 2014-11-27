@@ -111,7 +111,7 @@ Nali.extend Model:
       @destroyed = true
       delete @table.index[ @id ]
       @table.splice @table.indexOf( @ ), 1
-      @trigger 'destroy', @
+      @trigger 'destroy'
       @Model.trigger "destroy.#{ @_name.lower() }", @
       @onDestroy?()
       @unsubscribeAll()

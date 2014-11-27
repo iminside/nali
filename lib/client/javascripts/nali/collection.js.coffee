@@ -7,6 +7,7 @@ Nali.extend Collection:
   cloning: ->
     @subscribeTo @Model, "create.#{ @model._name.lower() }", @onModelCreated
     @subscribeTo @Model, "update.#{ @model._name.lower() }", @onModelUpdated
+    @subscribeTo @Model, "destroy.#{ @model._name.lower() }", @onModelDestroyed
     @adaptations = apply: [], cancel: []
     @ordering    = {}
     @adaptCollection()
@@ -36,7 +37,7 @@ Nali.extend Collection:
     @
 
   onModelDestroyed: ( model ) ->
-    @remove model unless @freezed
+    @remove model if model in @ and not @freezed
     @
 
   adaptCollection: ->
@@ -61,7 +62,6 @@ Nali.extend Collection:
     for model in [].concat models...
       Array::push.call @, model
       @adaptModel  model
-      @subscribeTo model, 'destroy', @onModelDestroyed
       @reorder()
       @trigger 'update.length.add', model
       @trigger 'update.length', 'add', model
