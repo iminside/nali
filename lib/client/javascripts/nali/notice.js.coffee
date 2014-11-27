@@ -2,19 +2,16 @@ Nali.Model.extend Notice:
 
   initialize: ->
     @::::expand Notice: @
+    @addMethods()
 
   prepare: ( params ) ->
     params = message: params if typeof params is 'string'
     params
 
-  info: ( params ) ->
-    @new( @prepare params ).showInfo()
-
-  warning: ( params ) ->
-    @new( @prepare params ).showWarning()
-
-  error:   ( params ) ->
-    @new( @prepare params ).showError()
+  addMethods: ->
+    for name of @views
+      do ( name ) =>
+        @[ name ] = ( params ) => @new( @prepare params ).show name
 
 
 Nali.View.extend
