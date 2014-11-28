@@ -7,14 +7,16 @@ module EventMachine
         @watches = {} 
       end
 
-      def []( name )
+      def storage
         @storage ||= {} 
-        @storage[ name ] or nil
+      end
+
+      def []( name = nil )
+        name ? ( storage[ name ] or nil ) : storage
       end
       
-      def []=( name, value = false )
-        @storage ||= {} 
-        @storage[ name ] = value
+      def []=( name, value )
+        storage[ name ] = value
       end
         
       def watches
