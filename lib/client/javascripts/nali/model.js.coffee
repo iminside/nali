@@ -387,6 +387,8 @@ Nali.extend Model:
       unless tester.call @, value, filter
         console.warn 'Attribute %s of model %O has not validate %s', name, @, validation
         if notice = @::attributes[ name ].notice
-          @Notice[ type ] params for type, params of notice
+          for type, params of notice
+            if @Notice[ type ]? then @Notice[ type ] params
+            else console.warn 'Unknown Notice type "%s"', type
         return false
     true
