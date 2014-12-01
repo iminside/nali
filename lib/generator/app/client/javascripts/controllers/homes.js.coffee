@@ -4,3 +4,4 @@ Nali.Controller.extend Homes:
     default: 'index'
 
     index: ->
+      @collection.freeze().add @Model.Home.new()
