@@ -4,6 +4,8 @@ Nali.View.extend HomeIndex:
 
   helpers: {}
 
+  onDraw:  ->
+
   onShow:  ->
 
   onHide:  ->
