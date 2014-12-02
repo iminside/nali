@@ -6,7 +6,7 @@ Nali.extend Application:
   defaultUrl:     'home'
   notFoundUrl:    'home'
   htmlContainer:  'body'
-  title:          'Application'
+  title:          'Welcome to Nali'
   keepAliveDelay: 20
 
   run: ( options ) ->
