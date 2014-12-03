@@ -336,7 +336,7 @@ Nali.extend Model:
     unless ( view = @views[ name ] )?
       if ( view = @::views[ name ] )?
         view = @views[ name ] = view.clone model: @
-      else console.error "View %s of model %O does not exist", name, @
+      else console.error 'View "%s" of model "%s" does not exist', name, @_name
     view
 
   show: ( name, insertTo ) ->
