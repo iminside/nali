@@ -261,7 +261,7 @@ Nali.extend View:
     @
 
   addYieldAssistant: ( node ) ->
-    ( @yield = node.parentNode ).removeChild node
+    ( @yield = @_ node.parentNode )[0].removeChild node
 
   addRelationAssistant: ( node ) ->
     [ match, name, chain ] = node.textContent.match /{\s*(\w+) of @(\w*)\s*}/
