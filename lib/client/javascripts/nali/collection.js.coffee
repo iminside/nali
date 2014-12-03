@@ -15,7 +15,9 @@ Nali.extend Collection:
     @
 
   refilter: ->
-    @model.each ( model ) => @add model if model.isCorrect( @filters ) and not ( model in @ )
+    @model.each ( model ) =>
+      if isCorrect = model.isCorrect( @filters ) and not ( model in @ ) then @add model
+      else if not isCorrect and model in @ then @remove model
     @
 
   new: ( model, filters ) ->
