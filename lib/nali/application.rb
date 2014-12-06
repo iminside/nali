@@ -65,20 +65,18 @@ module Nali
     end
     
     def self.access_options
-      if settings.environment == :development
-        YAML.load_file( File.join( root, 'app/server/models/access.yml' ) ).keys_to_sym!
-      else
-        @access_options ||= YAML.load_file( File.join( root, 'app/server/models/access.yml' ) ).keys_to_sym!
-      end
+      settings.environment == :development ? get_access_options : @access_options ||= get_access_options
     end
     
     def self.initialize!
-      Dir[ File.join( root, 'lib/*/**/*.rb' ) ].each { |file| require( file ) }
-      require File.join( root, 'app/server/controllers/application_controller.rb' )
-      Dir[ File.join( root, 'app/server/**/*.rb'   ) ].each { |file| require( file ) }
-      require File.join( root, 'config/application' )
-      require File.join( root, 'app/server/clients' )
-      Dir[ File.join( root, 'config/initializers/**/*.rb'   ) ].each { |file| require( file ) }
+      %w(
+        lib/*/**/*.rb
+        app/server/controllers/application_controller.rb
+        app/server/**/*.rb
+        config/application
+        app/server/clients
+        config/initializers/**/*.rb
+      ).each { |path| Dir[ File.join( root, path ) ].each { |file| require( file ) } }
       self
     end
     
@@ -89,6 +87,28 @@ module Nali
       require 'nali/tasks'
       Nali::Tasks.new 
     end
+
+    private
+
+      def self.get_access_options
+        YAML.load_file( File.join( root, 'app/server/models/access.yml' ) ).keys_to_sym!.each_value do |sections|
+          [ :create, :read, :update ].each do |type|
+            if section = sections[ type ]
+              section.each_key { |level| parse_access_level section, level }
+            end
+          end
+        end
+      end
+
+      def self.parse_access_level( section, level )
+        parsed = []
+        if section[ level ]
+          section[ level ].each do |value|
+            value =~ /^\+/ ? parsed += parse_access_level( section, value[ /[^\+]+/ ].to_sym ) : parsed << value
+          end
+        end
+        section[ level ] = parsed
+      end
       
   end  
 
