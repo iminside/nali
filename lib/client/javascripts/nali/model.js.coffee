@@ -60,10 +60,12 @@ Nali.extend Model:
 
   save: ( success, failure ) ->
     # отправляет на сервер запрос на сохранение модели, вызывает success в случае успеха и failure при неудаче
+    @beforeSave?()
     if @isValid()
       @query "#{ @_name.lower() }s.save", @attributes,
         ( { attributes, created, updated } ) =>
           @update( attributes, updated, created ).write()
+          @afterSave?()
           success? @
     else failure? @
     @
@@ -72,7 +74,10 @@ Nali.extend Model:
     # синхронизирует пришедшую с сервера модель с локальной, либо создает новую
     if model = @extensions[ _name ].find attributes.id
       if destroyed then model.remove()
-      else model.update attributes, updated, created
+      else if updated > @updated
+        model.updated = updated
+        model.created = created
+        model.update attributes
     else
       model = @extensions[ _name ].new attributes
       model.updated = updated
@@ -127,23 +132,20 @@ Nali.extend Model:
     # создает модель, и сохраняет её на сервере, вызывает success в случае успеха и failure при неудаче
     @new( attributes ).save success, failure
 
-  update: ( attributes, updated = 0, created = 0 ) ->
+  update: ( attributes, checkValidation = true ) ->
     # обновляет атрибуты модели, проверяя их валидность, генерирует событие update
-    if not updated or updated > @updated
-      @created = created if created
-      changed = []
-      changed.push name for name, value of attributes when @updateProperty name, value
-      if changed.length
-        @updated = updated if updated
-        @onUpdate? changed
-        @trigger 'update', changed
-        @Model.trigger "update.#{ @_name.lower() }", @
+    changed = []
+    changed.push name for name, value of attributes when @updateProperty name, value, checkValidation
+    if changed.length
+      @onUpdate? changed
+      @trigger 'update', changed
+      @Model.trigger "update.#{ @_name.lower() }", @
     @
 
-  updateProperty: ( name, value ) ->
+  updateProperty: ( name, value, checkValidation = true ) ->
     # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.propertyName
     value = @normalizeValue value
-    if @[ name ] isnt value and @isValidAttributeValue( name, value )
+    if @[ name ] isnt value and ( not checkValidation or @isValidAttributeValue( name, value ) )
       @[ name ] = value
       @[ 'onUpdate' + name.capitalize() ]?()
       @trigger "update.#{ name }"
