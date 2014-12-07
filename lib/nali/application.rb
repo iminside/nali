@@ -76,7 +76,7 @@ module Nali
         config/application
         app/server/clients
         config/initializers/**/*.rb
-      ).each { |path| Dir[ File.join( root, path ) ].each { |file| require( file ) } }
+      ).each { |path| Dir[ File.join( root, path ) ].sort.each { |file| require( file ) } }
       self
     end
     
