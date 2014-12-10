@@ -93,9 +93,11 @@ Nali.extend View:
       [ chain, segments... ] = match[2].split '/'
       if result = @analizeChain chain, ( if match[1].length is 1 then @ else @model )
         [ source, method ] = result
-        args = @parseUrlSegments segments
-        args.unshift params if params
-        source[ method ] args...
+        if method of source
+          args = @parseUrlSegments segments
+          args.unshift params if params
+          source[ method ] args...
+        else console.warn "Method %s not exists of %O", method, source
     else @redirect url, params
     @
 
@@ -302,8 +304,5 @@ Nali.extend View:
   analizeChain: ( chain, source = @model ) ->
     segments = chain.split '.'
     property = segments.pop()
-    source = @getSource segments, source
-    if source and property of source then [ source, property ]
-    else
-      console.warn "Property \"%s\" not exists in %O", property, source
-      null
+    return null unless source = @getSource segments, source
+    [ source, property ]
