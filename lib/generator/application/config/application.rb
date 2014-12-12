@@ -3,7 +3,7 @@ require 'bundler/setup'
 Bundler.require
 
 module Nali
-  
+
   class Application
 
     configure do |config|
@@ -13,5 +13,5 @@ module Nali
     end
 
   end
-  
+
 end
