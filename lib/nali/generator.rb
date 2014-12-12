@@ -16,26 +16,40 @@ module Nali
     end
     
     def create_application( name )
-      source_path = File.join( Nali.path, 'generator/.' ) 
-      target_path = File.join( Dir.pwd, name )
-      FileUtils.cp_r source_path, target_path
-      dirs = []
-      dirs << File.join( target_path, 'db' )
-      dirs << File.join( target_path, 'db/migrate' )
-      dirs << File.join( target_path, 'lib' )
-      dirs << File.join( target_path, 'lib/client' )
-      dirs << File.join( target_path, 'lib/client/javascripts' )
-      dirs << File.join( target_path, 'lib/client/stylesheets' )
-      dirs << File.join( target_path, 'public' )
-      dirs << File.join( target_path, 'public/client' )
-      dirs << File.join( target_path, 'tmp' )
-      dirs << File.join( target_path, 'vendor' )
-      dirs << File.join( target_path, 'vendor/client' )
-      dirs << File.join( target_path, 'vendor/client/javascripts' )
-      dirs << File.join( target_path, 'vendor/client/stylesheets' )
-      dirs << File.join( target_path, 'config/initializers' )
-      dirs.each { |path| Dir.mkdir( path ) unless Dir.exists?( path ) }
+      source = File.join( Nali.path, 'generator/application/.' )
+      target = File.join( Dir.pwd, name )
+      FileUtils.cp_r source, target
+      %w(
+        db
+        db/migrate
+        lib
+        lib/client
+        lib/client/javascripts
+        lib/client/stylesheets
+        public
+        public/client
+        tmp
+        vendor
+        vendor/client
+        vendor/client/javascripts
+        vendor/client/stylesheets
+        config/initializers
+      ).each { |dir| unless Dir.exists?( path = File.join( target, dir ) ) then Dir.mkdir( path ) end }
       puts "Application #{ name } created"
+    end
+
+    def render( name, classname )
+      require 'erb'
+      ERB.new( File.read( File.join( Nali.path, 'generator/templates', "#{ name }.tpl" )  ) ).result binding
+    end
+
+    def write( path, content, mode = 'w' )
+      File.open( File.join( Dir.pwd, path ), mode ) { |file| file.write( content ) }
+      puts ( mode == 'a' ? 'Updated:' : 'Created:' ) + path
+    end
+
+    def clean_cache
+      FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
     end
         
     def create_model( name )
@@ -43,63 +57,14 @@ module Nali
         if name.scan( '_' ).size > 0
           return puts 'Please don\'t use the underscore'
         end
+        clean_cache
         filename  = name.downcase
         classname = name.camelize
-        File.open( File.join( Dir.pwd, "app/client/javascripts/models/#{ filename }.js.coffee" ), 'w' ) do |f|
-          f.write(
-"Nali.Model.extend #{ classname }:
-
-  attributes: {}"
-            )
-        end
-        File.open( File.join( Dir.pwd, "app/client/javascripts/controllers/#{ filename }s.js.coffee" ), 'w' ) do |f|
-          f.write(
-"Nali.Controller.extend #{ classname }s:
-
-  actions: {}"
-            )
-        end
-        File.open( File.join( Dir.pwd, "app/server/models/#{ filename }.rb" ), 'w' ) do |f|
-          f.write( 
-"class #{ classname } < ActiveRecord::Base
-
-  include Nali::Model
-
-  def access_level( client )
-    :unknown
-  end
-
-end" 
-            )
-        end
-        File.open( File.join( Dir.pwd, "app/server/controllers/#{ filename }s_controller.rb" ), 'w' ) do |f|
-          f.write( 
-"class #{ classname }sController < ApplicationController
-  
-  include Nali::Controller
-  
-end" 
-            )
-        end
-        File.open( File.join( Dir.pwd, "app/server/models/access.yml" ), 'a' ) do |f|
-          f.write( 
-"
-
-#{ classname }:
-  create:
-  read:
-  update:
-  destroy:
-
-" 
-            )
-        end
-        FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
-        puts "Created: app/client/javascripts/models/#{ filename }.js.coffee"
-        puts "Created: app/client/javascripts/controllers/#{ filename }s.js.coffee"
-        puts "Created: app/server/models/#{ filename }.rb"
-        puts "Created: app/server/controllers/#{ filename }s_controller.rb"
-        puts "Updated: app/server/models/access.yml"
+        write "app/client/javascripts/models/#{ filename }.js.coffee", render( 'client_model', classname )
+        write "app/client/javascripts/controllers/#{ filename }s.js.coffee", render( 'client_controller', classname )
+        write "app/server/models/#{ filename }.rb", render( 'server_model', classname )
+        write "app/server/controllers/#{ filename }s_controller.rb", render( 'server_controller', classname )
+        write "app/server/models/access.yml", render( 'server_model_access', classname ), 'a'
       else puts 'Please go to the application folder' end
     end
         
@@ -109,34 +74,15 @@ end"
         filename  = filename.join( '_' )
         classname = name.underscore.camelize
         if not dirname.empty? and not filename.empty? and not classname.empty?
-          dirs = []
-          dirs << File.join( Dir.pwd, "app/client/javascripts/views/#{ dirname }" )
-          dirs << File.join( Dir.pwd, "app/client/stylesheets/#{ dirname }" )
-          dirs << File.join( Dir.pwd, "app/client/templates/#{ dirname }" )
-          dirs.each { |path| Dir.mkdir( path ) unless Dir.exists?( path ) }
-          File.open( File.join( Dir.pwd, "app/client/javascripts/views/#{ dirname }/#{ filename }.js.coffee" ), 'w' ) do |f|
-            f.write(
-"Nali.View.extend #{ classname }:
-
-  events:  []
-
-  helpers: {}
-
-  onDraw:  ->
-
-  onShow:  ->
-
-  onHide:  ->"
-              )
-          end 
-          File.open( File.join( Dir.pwd, "app/client/stylesheets/#{ dirname }/#{ filename }.css.sass" ), 'w' ) do |f|
-            f.write( ".#{ classname }" )
-          end 
-          File.open( File.join( Dir.pwd, "app/client/templates/#{ dirname }/#{ filename }.html" ), 'w' ) {}
-          FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
-          puts "Created: app/client/javascripts/views/#{ dirname }/#{ filename }.js.coffee"
-          puts "Created: app/client/stylesheets/#{ dirname }/#{ filename }.css.sass"
-          puts "Created: app/client/templates/#{ dirname }/#{ filename }.html"
+          clean_cache
+          %w(
+            app/client/javascripts/views/#{ dirname }
+            app/client/stylesheets/#{ dirname }
+            app/client/templates/#{ dirname }
+          ).each { |dir| unless Dir.exists?( path = File.join( Dir.pwd, dir ) ) then Dir.mkdir( path ) end }
+          write "app/client/javascripts/views/#{ dirname }/#{ filename }.js.coffee", render( 'client_view', classname )
+          write "app/client/stylesheets/#{ dirname }/#{ filename }.css.sass", render( 'client_view_styles', classname )
+          write "app/client/templates/#{ dirname }/#{ filename }.html", ''
         else puts 'Invalid view name' end
       else puts 'Please go to the application folder' end
     end    
