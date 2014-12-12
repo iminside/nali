@@ -75,11 +75,11 @@ module Nali
         classname = name.underscore.camelize
         if not dirname.empty? and not filename.empty? and not classname.empty?
           clean_cache
-          %w(
-            app/client/javascripts/views/#{ dirname }
-            app/client/stylesheets/#{ dirname }
-            app/client/templates/#{ dirname }
-          ).each { |dir| unless Dir.exists?( path = File.join( Dir.pwd, dir ) ) then Dir.mkdir( path ) end }
+          [
+            "app/client/javascripts/views/#{ dirname }",
+            "app/client/stylesheets/#{ dirname }",
+            "app/client/templates/#{ dirname }"
+          ].each { |dir| unless Dir.exists?( path = File.join( Dir.pwd, dir ) ) then Dir.mkdir( path ) end }
           write "app/client/javascripts/views/#{ dirname }/#{ filename }.js.coffee", render( 'client_view', classname )
           write "app/client/stylesheets/#{ dirname }/#{ filename }.css.sass", render( 'client_view_styles', classname )
           write "app/client/templates/#{ dirname }/#{ filename }.html", ''
