@@ -12,13 +12,16 @@ module Nali
     
     def on_client_connected( client )
       clients << client
-      client_connected( client ) if respond_to?( :client_connected )
     end
     
     def on_received_message( client, message )
-      if message[ :ping ]
+      if message[ :nali_browser_id ]
+        client.browser_id = message[ :nali_browser_id ]
+        client_connected( client ) if respond_to?( :client_connected )
+        client.send_json action: :onOpen
+      elsif message[ :ping ]
         client.send_json action: :pong
-      else
+      elsif message[ :controller ]
         name = message[ :controller ].capitalize + 'Controller'
         if Math.const_defined?( name ) and controller = Object.const_get( name )
           controller = controller.new( client, message )
