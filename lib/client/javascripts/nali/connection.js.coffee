@@ -6,7 +6,7 @@ Nali.extend Connection:
 
   open: ->
     @dispatcher = new WebSocket @Application.wsServer
-    @dispatcher.onopen    = ( event ) => @onOpen    event
+    @dispatcher.onopen    = ( event ) => @identification()
     @dispatcher.onclose   = ( event ) => @onClose   event
     @dispatcher.onerror   = ( event ) => @onError   event
     @dispatcher.onmessage = ( event ) => @onMessage JSON.parse event.data
@@ -17,7 +17,7 @@ Nali.extend Connection:
   journal:        []
   reconnectDelay: 0
 
-  onOpen: ( event ) ->
+  onOpen: ->
     @reconnectDelay = 0
     @trigger 'open'
 
@@ -49,8 +49,16 @@ Nali.extend Connection:
     @keepAlive()
     @
 
+  identification: ->
+    @send nali_browser_id: @Cookie.get( 'nali_browser_id' ) or @Cookie.set 'nali_browser_id', @Model.guid()
+    @
+
   sync: ( message ) ->
     @Model.sync message.params
+    @
+
+  appRun: ( { method, params } ) ->
+    @Application[ method ]? params
     @
 
   callMethod: ( { model, method, params } ) ->
