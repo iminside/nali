@@ -2,9 +2,24 @@ module EventMachine
   module WebSocket
     class Connection
          
+      attr_accessor :browser_id
+
+      def all_tabs
+        Nali::Clients.list
+          .select { |client| client.browser_id == self.browser_id }
+          .each{ |client| yield( client ) if block_given? }
+      end
+
+      def other_tabs
+        Nali::Clients.list
+          .select { |client| client != self and client.browser_id == self.browser_id }
+          .each{ |client| yield( client ) if block_given? }
+      end
+
       def reset
         @storage = {} 
         @watches = {} 
+        self
       end
 
       def storage
@@ -45,6 +60,7 @@ module EventMachine
         
       def send_json( hash )
         send hash.to_json
+        self
       end
         
       def sync( *models )
@@ -56,27 +72,38 @@ module EventMachine
             send_json action: :sync, params: params
           end
         end
+        self
       end
         
       def call_method( method, model, params = nil )
         model = "#{ model.class.name }.#{ model.id }" if model.is_a?( ActiveRecord::Base )
         send_json action: 'callMethod', model: model, method: method, params: params
+        self
       end
 
       def notice( method, params = nil )
         call_method method, 'Notice', params
+        self
       end
         
       def info( params )
         notice :info, params
+        self
       end
         
       def warning( params )
         notice :warning, params
+        self
       end
         
       def error( params )
         notice :error, params
+        self
+      end
+
+      def app_run( method, params = nil )
+        send_json action: 'appRun', method: method, params: params
+        self
       end
         
     end
