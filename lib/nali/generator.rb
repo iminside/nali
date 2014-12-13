@@ -16,8 +16,8 @@ module Nali
     end
     
     def create_application( name )
-      source = File.join( Nali.path, 'generator/application/.' )
-      target = File.join( Dir.pwd, name )
+      source = File.join Nali.path, 'generator/application/.'
+      target = File.join Dir.pwd, name
       FileUtils.cp_r source, target
       %w(
         db
@@ -45,11 +45,11 @@ module Nali
 
     def write( path, content, mode = 'w' )
       File.open( File.join( Dir.pwd, path ), mode ) { |file| file.write( content ) }
-      puts ( mode == 'a' ? 'Updated:' : 'Created:' ) + path
+      puts ( mode == 'a' ? 'Updated: ' : 'Created: ' ) + path
     end
 
     def clean_cache
-      FileUtils.rm_rf( File.join( Dir.pwd, "tmp/cache" ) )
+      FileUtils.rm_rf File.join( Dir.pwd, 'tmp/cache' )
     end
         
     def create_model( name )
