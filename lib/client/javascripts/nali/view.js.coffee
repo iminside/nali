@@ -48,8 +48,6 @@ Nali.extend View:
       @trigger 'show'
       @visible = true
       @runModelCallback 'afterShow'
-    else
-      @draw()
     @
 
   hide: ( delay = 0 ) ->
@@ -58,15 +56,14 @@ Nali.extend View:
       @onHide?()
       @trigger 'hide'
       @runAssistants 'hide'
-      @hideElement delay or @hideDelay
+      @hideElement if delay and typeof( delay ) is 'number' then delay else @hideDelay
       @destroyObservation()
       @visible = false
       @runModelCallback 'afterHide'
     @
 
   hideElement: ( delay ) ->
-    if delay and typeof( delay ) is 'number'
-      setTimeout ( => @removeElement() ), delay
+    if delay then setTimeout ( => @removeElement() ), delay
     else @removeElement()
     @
 
