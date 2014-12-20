@@ -125,7 +125,7 @@ Nali.extend Model:
   new: ( attributes ) ->
     # создает модель, не сохраняя её на сервере
     model = @clone( attributes: @defaultAttributes() ).accessing()
-    model[ name ] = @normalizeValue value for name, value of attributes
+    model[ name ] = @normalizeAttributeValue name, value for name, value of attributes
     model
 
   create: ( attributes, success, failure ) ->
@@ -144,7 +144,7 @@ Nali.extend Model:
 
   updateProperty: ( name, value, checkValidation = true ) ->
     # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.propertyName
-    value = @normalizeValue value
+    value = @normalizeAttributeValue name, value
     if @[ name ] isnt value and ( not checkValidation or @isValidAttributeValue( name, value ) )
       @[ name ] = value
       @[ 'onUpdate' + name.capitalize() ]?()
@@ -196,17 +196,13 @@ Nali.extend Model:
     attributes = id: @guid()
     for name, value of @attributes
       if value instanceof Object
-        attributes[ name ] = if value.default? then @normalizeValue value.default else null
-      else attributes[ name ] = @normalizeValue value
+        attributes[ name ] = if value.default? then @normalizeAttributeValue name, value.default else null
+      else attributes[ name ] = @normalizeAttributeValue name, value
     attributes
 
-  normalizeValue: ( value ) ->
-    # приводит значения к нормальному виду, если в строке только числа - преобразуется к числу
-    # т.е. строка '123' становится числом 123, '123.5' становится 123.5, а '123abc' остается строкой
-    if typeof value is 'string'
-      value = "#{ value }".trim()
-      if value is ( ( correct = + value ) + '' ) then correct else value
-    else value
+  normalizeAttributeValue: ( name, value ) ->
+    # если формат свойства number пробует привести значение к числу
+    if @::attributes[ name ]?.format is 'number' and value is ( ( correct = + value ) + '' ) then correct else value
 
   isCorrect: ( filters = {} ) ->
     # проверяет соответствие аттрибутов модели определенному набору фильтров, возвращает true либо false
