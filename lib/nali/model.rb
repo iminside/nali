@@ -38,8 +38,8 @@ module Nali
                 relations << value
               elsif value.is_a?( ActiveRecord::Base )
                 relations << value
-                if reflection = self.class.reflections[ option ] and reflection.macro == :belongs_to
-                  params[ :attributes ][ option.to_s + '_id' ] = value.id
+                if self.respond_to?( key = option.to_s + '_id' ) and self[ key ] == value.id
+                  params[ :attributes ][ key ] = value.id
                 end
               else
                 params[ :attributes ][ option ] = value
