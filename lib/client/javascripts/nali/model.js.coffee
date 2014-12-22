@@ -319,8 +319,9 @@ Nali.extend Model:
     # связанных с текущей через модель through
     @getter name, =>
       delete @[ name ]
+      list = @[ through ]
       @[ name ] = model.where correct: ->
-        return true for model in @[ through ] when model[ key ] is @
+        return true for model in list when model[ key ] is @
         false
       @[ name ].subscribeTo @[ through ], 'update.length.add',    ( model ) -> @add    model[ key ]
       @[ name ].subscribeTo @[ through ], 'update.length.remove', ( model ) -> @remove model[ key ]
