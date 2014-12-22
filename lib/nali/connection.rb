@@ -65,11 +65,13 @@ module EventMachine
         
       def sync( *models )
         models.flatten.compact.each do |model|
-          params, relations = model.get_sync_params( self )
-          if not params.empty? and ( watch_time( model ) < model.updated_at.to_f or model.destroyed? )
-            if model.destroyed? then unwatch( model ) else watch_time_up model end
-            relations.each { |relation| sync relation }
-            send_json action: :sync, params: params
+          if watch_time( model ) < model.updated_at.to_f or model.destroyed?
+            params, relations = model.get_sync_params( self )
+            unless params.empty?
+              if model.destroyed? then unwatch( model ) else watch_time_up model end
+              relations.each { |relation| sync relation }
+              send_json action: :sync, params: params
+            end
           end
         end
         self
