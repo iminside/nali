@@ -23,3 +23,4 @@
 	* [Маршрутизация](https://github.com/4urbanoff/nali/wiki/Маршрутизация)
 	* [Генератор](https://github.com/4urbanoff/nali/wiki/Генератор)
 	* [Rake задачи](https://github.com/4urbanoff/nali/wiki/Rake-задачи)
+* [**Пример работы**](https://github.com/4urbanoff/isite.im)
