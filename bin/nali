@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'fileutils'
 require 'nali/extensions'
 require 'nali/version'
 require 'nali/generator'
