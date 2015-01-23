@@ -44,7 +44,7 @@ Nali.extend Application:
 
   setTitle: ( @title ) ->
     @titleBox ?= if ( exists = @_ 'head title' ).lenght then exists else @_( '<title>' ).appendTo 'head'
-    @titleBox[0].innerText = @title
+    @titleBox.text @title
     @trigger 'update.title'
     @
 
