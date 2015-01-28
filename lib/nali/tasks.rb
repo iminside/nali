@@ -63,6 +63,9 @@ module Nali
 
       def sprockets_tasks
         require 'rake/sprocketstask'
+        Sprockets::Helpers.configure do |config|
+          config.debug     = false
+        end
         Rake::SprocketsTask.new do |task|
           task.environment = @settings.client
           task.output      = File.join( @settings.public_folder, 'client' )
