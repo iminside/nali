@@ -2,14 +2,14 @@ Nali.extend Controller:
 
   extension: ->
     if @_name isnt 'Controller'
-      @prepareActions()
+      @_prepareActions()
       @modelName = @_name.replace /s$/, ''
     @
 
   new: ( collection, filters, params ) ->
     @clone collection: collection, filters: filters, params: params
 
-  prepareActions: ->
+  _prepareActions: ->
     @_actions = {}
     for name, action of @actions when not ( name in [ 'default', 'before', 'after' ] )
       [ name, filters... ] = name.split '/'
@@ -18,23 +18,23 @@ Nali.extend Controller:
         filters.splice filters.indexOf( filter ), 1
         params.push filter[ 1.. ]
       @_actions[ name ] = filters: filters, params: params, methods: [ action ]
-    @prepareBefores()
-    @prepareAfters()
+    @_prepareBefores()
+    @_prepareAfters()
     @
 
-  prepareBefores: ->
+  _prepareBefores: ->
     if @actions?.before?
-      list = @analizeFilters 'before'
+      list = @_analizeFilters 'before'
       @_actions[ name ].methods = actions.concat @_actions[ name ].methods for name, actions of list
     @
 
-  prepareAfters: ->
+  _prepareAfters: ->
     if @actions?.after?
-      list = @analizeFilters 'after'
+      list = @_analizeFilters 'after'
       @_actions[ name ].methods = @_actions[ name ].methods.concat actions for name, actions of list
     @
 
-  analizeFilters: ( type ) ->
+  _analizeFilters: ( type ) ->
     list = {}
     for names, action of @actions[ type ]
       [ invert, names ] = switch
@@ -51,15 +51,15 @@ Nali.extend Controller:
     @
 
   runAction: ( name ) ->
-    method.call @ for method in @_actions[ name ].methods when not @stopped
-    if @stopped then @collection.destroy()
+    method.call @ for method in @_actions[ name ].methods when not @_stopped
+    if @_stopped then @collection.destroy()
     else
       @collection.show name
       @Router.changeUrl()
     @
 
   stop: ->
-    @stopped = true
+    @_stopped = true
     @
 
   redirect: ( args... ) ->

@@ -2,60 +2,60 @@ Nali.extend Model:
 
   extension: ->
     if @_name isnt 'Model'
-      @table       = @tables[ @_name ] ?= []
-      @table.index = {}
-      @parseRelations()
-      @adapt()
+      @_table       = @_tables[ @_name ] ?= []
+      @_table.index = {}
+      @_parseRelations()
+      @_adapt()
     @
 
   cloning: ->
-    @views = {}
+    @_views = {}
 
-  tables:      {}
-  attributes:  {}
+  _tables:     {}
+  attributes: {}
+  _callStack:  []
   updated:     0
-  callStack:   []
   destroyed:   false
 
-  adapt: ->
-    for name, method of @ when /^_\w+/.test name
+  _adapt: ->
+    for name, method of @ when /^__\w+/.test name
       do ( name, method ) =>
         if typeof method is 'function'
-          @[ name[ 1.. ] ] = ( args... ) -> @[ name ] args...
-    @adaptViews()
+          @[ name[ 2.. ] ] = ( args... ) -> @[ name ] args...
+    @_adaptViews()
     @
 
-  adaptViews: ->
-    @views = {}
+  _adaptViews: ->
+    @_views = {}
     for name, view of @View.extensions when name.indexOf( @_name ) >= 0
       do ( name, view ) =>
-        @views[ short = view._shortName ] = view
+        @_views[ short = view._shortName ] = view
         shortCap = short.capitalize()
         unless @[ viewMethod = 'view' + shortCap ]? then @[ viewMethod ] = -> @view short
         unless @[ showMethod = 'show' + shortCap ]? then @[ showMethod ] = ( insertTo ) -> @show short, insertTo
         unless @[ hideMethod = 'hide' + shortCap ]? then @[ hideMethod ] = -> @hide short
     @
 
-  callStackAdd: ( params ) ->
+  _callStackAdd: ( params ) ->
     # добавляет задачу в очередь на выполнение, запускает выполнение очереди
-    @callStack.push params
+    @_callStack.push params
     @runStack()
     @
 
   runStack: ->
     # запускает выполнение задач у существующих моделей
-    for item, index in @callStack[ 0.. ]
+    for item, index in @_callStack[ 0.. ]
       if model = @extensions[ item.model ].find item.id
         model[ item.method ] item.params
-        @callStack.splice @callStack.indexOf( item ), 1
+        @_callStack.splice @_callStack.indexOf( item ), 1
     @
 
   # работа с моделями
 
-  accessing: ->
+  _accessing: ->
     # устанавливает геттеры доступа к атрибутам и связям
     @access @attributes
-    @setRelations()
+    @_setRelations()
     @
 
   save: ( success, failure ) ->
@@ -70,16 +70,16 @@ Nali.extend Model:
     else failure? @
     @
 
-  sync: ( { _name, attributes, created, updated, destroyed } ) ->
+  sync: ( { name, attributes, created, updated, destroyed } ) ->
     # синхронизирует пришедшую с сервера модель с локальной, либо создает новую
-    if model = @extensions[ _name ].find attributes.id
+    if model = @extensions[ name ].find attributes.id
       if destroyed then model.remove()
       else if updated > @updated
         model.updated = updated
         model.created = created
         model.update attributes
     else
-      model = @extensions[ _name ].new attributes
+      model = @extensions[ name ].new attributes
       model.updated = updated
       model.created = created
       model.write()
@@ -98,13 +98,13 @@ Nali.extend Model:
     @
 
   written: ->
-    @ in @table
+    @ in @_table
 
   write: ->
     # добавляет модель в локальную таблицу, генерирует событие create
-    @table.index[ @id ] = @ if @id and not @table.index[ @id ]
+    @_table.index[ @id ] = @ if @id and not @_table.index[ @id ]
     unless @written()
-      @table.push @
+      @_table.push @
       @onCreate?()
       @Model.trigger "create.#{ @_name.lower() }", @
       @Model.runStack()
@@ -114,8 +114,8 @@ Nali.extend Model:
     # удаляет модель из локальной таблицы, генерирует событие destroy
     if @written()
       @destroyed = true
-      delete @table.index[ @id ]
-      @table.splice @table.indexOf( @ ), 1
+      delete @_table.index[ @id ]
+      @_table.splice @_table.indexOf( @ ), 1
       @trigger 'destroy'
       @Model.trigger "destroy.#{ @_name.lower() }", @
       @onDestroy?()
@@ -124,8 +124,8 @@ Nali.extend Model:
 
   new: ( attributes ) ->
     # создает модель, не сохраняя её на сервере
-    model = @clone( attributes: @defaultAttributes() ).accessing()
-    model[ name ] = @normalizeAttributeValue name, value for name, value of attributes
+    model = @clone( attributes: @_defaultAttributes() )._accessing()
+    model[ name ] = @_normalizeAttributeValue name, value for name, value of attributes
     model
 
   create: ( attributes, success, failure ) ->
@@ -144,7 +144,7 @@ Nali.extend Model:
 
   updateProperty: ( name, value, checkValidation = true ) ->
     # обновляет один атрибут модели, проверяя его валидность, генерирует событие update.propertyName
-    value = @normalizeAttributeValue name, value
+    value = @_normalizeAttributeValue name, value
     if @[ name ] isnt value and ( not checkValidation or @isValidAttributeValue( name, value ) )
       @[ name ] = value
       @[ 'onUpdate' + name.capitalize() ]?()
@@ -166,7 +166,7 @@ Nali.extend Model:
 
   find: ( id ) ->
     # находит модель по её id используя индекс
-    @table.index[ id ]
+    @_table.index[ id ]
 
   where: ( filters ) ->
     # возвращает коллекцию моделей соответствующих фильтру
@@ -178,7 +178,7 @@ Nali.extend Model:
 
   each: ( callback ) ->
     # применяет колбек ко всем моделям
-    callback.call @, model for model in @table
+    callback.call @, model for model in @_table
     @
 
   # работа с аттрибутами
@@ -191,16 +191,16 @@ Nali.extend Model:
       date = Math.floor date / 16
       ( if sub is 'x' then rand else ( rand & 0x7 | 0x8 ) ).toString 16
 
-  defaultAttributes: ->
+  _defaultAttributes: ->
     # возвращает объект аттрибутов по умолчанию
     attributes = id: @guid()
     for name, value of @attributes
       if value instanceof Object
-        attributes[ name ] = if value.default? then @normalizeAttributeValue name, value.default else null
-      else attributes[ name ] = @normalizeAttributeValue name, value
+        attributes[ name ] = if value.default? then @_normalizeAttributeValue name, value.default else null
+      else attributes[ name ] = @_normalizeAttributeValue name, value
     attributes
 
-  normalizeAttributeValue: ( name, value ) ->
+  _normalizeAttributeValue: ( name, value ) ->
     # если формат свойства number пробует привести значение к числу
     if @::attributes[ name ]?.format is 'number' and value is ( ( correct = + value ) + '' ) then correct else value
 
@@ -232,17 +232,17 @@ Nali.extend Model:
 
   # работа со связями
 
-  parseRelations: ( type, options ) ->
+  _parseRelations: ( type, options ) ->
     # производит разбор связей
     @relations = {}
     for type in [ 'belongsTo', 'hasOne', 'hasMany' ]
       for options in [].concat( @[ type ] ) when @[ type ]?
-        params = @[ 'parse' + type.capitalize() ] @parseInitialRelationParams options
+        params = @[ '_parse' + type.capitalize() ] @_parseInitialRelationParams options
         section = type + if params.through? then 'Through' else ''
         ( @relations[ section ] ?= [] ).push params
     @
 
-  parseInitialRelationParams: ( options ) ->
+  _parseInitialRelationParams: ( options ) ->
     # дает начальные параметры настроек связи
     if typeof options is 'object'
       params         = name: Object.keys( options )[0]
@@ -253,41 +253,41 @@ Nali.extend Model:
       params = name: options
     params
 
-  parseBelongsTo: ( params ) ->
+  _parseBelongsTo: ( params ) ->
     # производит разбор связей belongsTo
     params.model ?= @Model.extensions[ params.name.capitalize() ]
     params.key   ?= params.name.lower() + '_id'
     params
 
-  parseHasOne: ( params ) ->
+  _parseHasOne: ( params ) ->
     # производит разбор связей hasOne
     params.model ?= @Model.extensions[ params.name.capitalize() ]
     params.key   ?= ( if params.through then params.name else @_name + '_id' ).lower()
     params
 
-  parseHasMany: ( params ) ->
+  _parseHasMany: ( params ) ->
     # производит разбор связей hasMany
     params.model ?= @Model.extensions[ params.name[ ...-1 ].capitalize() ]
     params.key   ?= ( if params.through then params.name[ ...-1 ] else @_name + '_id' ).lower()
     params
 
-  setRelations: ->
+  _setRelations: ->
     # запускает установку связей у модели
-    @setRelationsType type for type in [ 'belongsTo', 'hasOne', 'hasMany', 'hasOneThrough', 'hasManyThrough' ]
+    @_setRelationsType type for type in [ 'belongsTo', 'hasOne', 'hasMany', 'hasOneThrough', 'hasManyThrough' ]
     @
 
-  setRelationsType: ( type ) ->
+  _setRelationsType: ( type ) ->
     # запускает установку связей определенного типа
     if params = @relations[ type ]
-      @[ 'set' + type.capitalize() ] param for param in params
+      @[ '_set' + type.capitalize() ] param for param in params
     @
 
-  setBelongsTo: ( { key, model, name, through } ) ->
+  _setBelongsTo: ( { key, model, name, through } ) ->
     # устанавливает геттер типа belongsTo возвращающий связанную модель
     @getter name, => model.find @[ key ]
     @
 
-  setHasOne: ( { key, model, name, through } ) ->
+  _setHasOne: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasOne возвращающий связанную модель
     @getter name, =>
       delete @[ name ]
@@ -297,7 +297,7 @@ Nali.extend Model:
       @[ name ]
     @
 
-  setHasMany: ( { key, model, name, through } ) ->
+  _setHasMany: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasMany возвращающий коллекцию связанных моделей
     @getter name, =>
       delete @[ name ]
@@ -305,7 +305,7 @@ Nali.extend Model:
       @[ name ] = model.where filters
     @
 
-  setHasOneThrough: ( { key, model, name, through } ) ->
+  _setHasOneThrough: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasOne возвращающий модель,
     # связанную с текущей через модель through
     @getter name, =>
@@ -314,7 +314,7 @@ Nali.extend Model:
       @[ name ]
     @
 
-  setHasManyThrough: ( { key, model, name, through } ) ->
+  _setHasManyThrough: ( { key, model, name, through } ) ->
     # устанавливает геттер типа hasMany возвращающий коллекцию моделей,
     # связанных с текущей через модель through
     @getter name, =>
@@ -332,9 +332,9 @@ Nali.extend Model:
 
   view: ( name ) ->
     # возвращает объект вида, либо новый, либо ранее созданный
-    unless ( view = @views[ name ] )?
-      if ( view = @::views[ name ] )?
-        view = @views[ name ] = view.clone model: @
+    unless ( view = @_views[ name ] )?
+      if ( view = @::_views[ name ] )?
+        view = @_views[ name ] = view.clone model: @
       else console.error 'View "%s" of model "%s" does not exist', name, @_name
     view
 

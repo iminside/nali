@@ -69,11 +69,11 @@ module Nali
     end
     
     def trigger_success( params = nil )
-      client.send_json( { action: 'success', params: params, journal_id: @message[ :journal_id ] } )
+      client.send_json( { action: :_success, params: params, journal_id: @message[ :journal_id ] } )
     end
     
     def trigger_failure( params = nil )
-      client.send_json( { action: 'failure', params: params, journal_id: @message[ :journal_id ] } )
+      client.send_json( { action: :_failure, params: params, journal_id: @message[ :journal_id ] } )
     end
     
     def before( &closure )

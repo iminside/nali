@@ -70,7 +70,7 @@ module EventMachine
             unless params.empty?
               if model.destroyed? then unwatch( model ) else watch_time_up model end
               relations.each { |relation| sync relation }
-              send_json action: :sync, params: params
+              send_json action: :_sync, params: params
             end
           end
         end
@@ -79,12 +79,12 @@ module EventMachine
         
       def call_method( method, model, params = nil )
         model = "#{ model.class.name }.#{ model.id }" if model.is_a?( ActiveRecord::Base )
-        send_json action: 'callMethod', model: model, method: method, params: params
+        send_json action: :_callMethod, model: model, method: method, params: params
         self
       end
 
       def notice( method, params = nil )
-        call_method method, 'Notice', params
+        call_method method, :Notice, params
         self
       end
         
@@ -104,7 +104,7 @@ module EventMachine
       end
 
       def app_run( method, params = nil )
-        send_json action: 'appRun', method: method, params: params
+        send_json action: :_appRun, method: method, params: params
         self
       end
         

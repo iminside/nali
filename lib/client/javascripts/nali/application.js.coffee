@@ -12,21 +12,21 @@ Nali.extend Application:
   run: ( options ) ->
     @::starting()
     @[ key ] = value for key, value of options
-    @onReadyDOM ->
+    @_onReadyDOM ->
       @::_           = @domEngine
       @htmlContainer = @_ @htmlContainer
       @setTitle @title
       @Router.start()
-      @runConnection()
+      @_runConnection()
 
-  onReadyDOM: ( callback ) ->
+  _onReadyDOM: ( callback ) ->
     document.addEventListener 'DOMContentLoaded', =>
       document.removeEventListener 'DOMContentLoaded', arguments.callee, false
       callback.call @
     , false
     @
 
-  runConnection: ->
+  _runConnection: ->
     if @useWebSockets
       @Connection.subscribe @, 'open',  @onConnectionOpen
       @Connection.subscribe @, 'close', @onConnectionClose

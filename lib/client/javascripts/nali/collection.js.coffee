@@ -1,18 +1,18 @@
 Nali.extend Collection:
 
-  toShowViews:  []
-  visibleViews: []
-  length:       0
-
   cloning: ->
-    @subscribeTo @Model, "create.#{ @model._name.lower() }", @onModelCreated
-    @subscribeTo @Model, "update.#{ @model._name.lower() }", @onModelUpdated
-    @subscribeTo @Model, "destroy.#{ @model._name.lower() }", @onModelDestroyed
+    @subscribeTo @Model, "create.#{ @model._name.lower() }",  @_onModelCreated
+    @subscribeTo @Model, "update.#{ @model._name.lower() }",  @_onModelUpdated
+    @subscribeTo @Model, "destroy.#{ @model._name.lower() }", @_onModelDestroyed
     @adaptations = apply: [], cancel: []
-    @ordering    = {}
-    @adaptCollection()
+    @_ordering   = {}
+    @_adaptCollection()
     @refilter()
     @
+
+  _toShowViews:  []
+  _visibleViews: []
+  length:        0
 
   refilter: ->
     @model.each ( model ) =>
@@ -23,34 +23,34 @@ Nali.extend Collection:
   new: ( model, filters ) ->
     @clone model: model, filters: filters
 
-  onModelCreated: ( model ) ->
+  _onModelCreated: ( model ) ->
     @add model if not @freezed and model.isCorrect @filters
     @
 
-  onModelUpdated: ( model ) ->
+  _onModelUpdated: ( model ) ->
     if model.written()
       if model in @
         if @freezed or model.isCorrect @filters
-          @reorder()
+          @_reorder()
           @trigger 'update.model', model
         else @remove model
       else if not @freezed and model.isCorrect @filters
         @add model
     @
 
-  onModelDestroyed: ( model ) ->
+  _onModelDestroyed: ( model ) ->
     @remove model if model in @ and not @freezed
     @
 
-  adaptCollection: ->
-    for name, method of @model when /^_\w+$/.test( name ) and typeof method is 'function'
+  _adaptCollection: ->
+    for name, method of @model when /^__\w+$/.test( name ) and typeof method is 'function'
       do ( name, method ) =>
-        @[ name = name[ 1.. ] ] = ( args... ) =>
+        @[ name = name[ 2.. ] ] = ( args... ) =>
           @each ( model ) -> model[ name ] args...
           @
     @
 
-  adaptModel: ( model, type = 'apply' ) ->
+  _adaptModel: ( model, type = 'apply' ) ->
     adaptation.call @, model for adaptation in @adaptations[ type ]
     @
 
@@ -63,17 +63,17 @@ Nali.extend Collection:
   add: ( models... ) ->
     for model in [].concat models...
       Array::push.call @, model
-      @adaptModel  model
-      @reorder()
+      @_adaptModel  model
+      @_reorder()
       @trigger 'update.length.add', model
       @trigger 'update.length', 'add', model
     @
 
   remove: ( model ) ->
-    @adaptModel model, 'cancel'
+    @_adaptModel model, 'cancel'
     Array::splice.call @, @indexOf( model ), 1
     @unsubscribeFrom model
-    @reorder()
+    @_reorder()
     @trigger 'update.length.remove', model
     @trigger 'update.length', 'remove', model
     @
@@ -113,37 +113,37 @@ Nali.extend Collection:
     filters[ name ] = value for name, value of @filters
     @model.where filters
 
-  order: ( @ordering ) ->
-    @reorder()
+  order: ( @_ordering ) ->
+    @_reorder()
     @
 
-  reorder: ->
-    if @ordering.by?
-      clearTimeout @ordering.timer if @ordering.timer?
-      @ordering.timer = setTimeout =>
-        if typeof @ordering.by is 'function'
-          @sort @ordering.by
+  _reorder: ->
+    if @_ordering.by?
+      clearTimeout @_ordering.timer if @_ordering.timer?
+      @_ordering.timer = setTimeout =>
+        if typeof @_ordering.by is 'function'
+          @sort @_ordering.by
         else
           @sort ( one, two ) =>
-            one = one[ @ordering.by ]
-            two = two[ @ordering.by ]
-            if @ordering.as is 'number'
+            one = one[ @_ordering.by ]
+            two = two[ @_ordering.by ]
+            if @_ordering.as is 'number'
               one = + one
               two = + two
-            if @ordering.as is 'string'
+            if @_ordering.as is 'string'
               one = '' + one
               two = '' + two
-            ( if one > two then 1 else if one < two then -1 else 0 ) * ( if @ordering.desc then -1 else 1 )
-        @orderViews()
-        delete @ordering.timer
+            ( if one > two then 1 else if one < two then -1 else 0 ) * ( if @_ordering.desc then -1 else 1 )
+        @_orderViews()
+        delete @_ordering.timer
       , 5
     @
 
-  orderViews: ->
-    if @inside
-      children = Array::slice.call @inside.children
+  _orderViews: ->
+    if @_inside
+      children = Array::slice.call @_inside.children
       children.sort ( one, two ) => @indexOf( one.view.model ) - @indexOf( two.view.model )
-      @inside.appendChild child for child in children
+      @_inside.appendChild child for child in children
     @
 
   show: ( viewName, insertTo, isRelation = false ) ->
@@ -153,12 +153,12 @@ Nali.extend Collection:
           view.subscribeTo @, 'reset', view.hide
         else unless @visible
           @visible = true
-          @prepareViewToShow view
-          @hideVisibleViews()
+          @_prepareViewToShow view
+          @_hideVisibleViews()
         else
-          @::visibleViews.push view
+          @::_visibleViews.push view
         view.show insertTo
-        @inside ?= view.element[0].parentNode
+        @_inside ?= view.element[0].parentNode
       , ( model ) ->
         model.hide viewName
     @
@@ -167,16 +167,16 @@ Nali.extend Collection:
     model.hide viewName, delay for model in @
     @
 
-  prepareViewToShow: ( view ) ->
-    unless view in @::toShowViews
-      @::toShowViews.push view
-      @prepareViewToShow layout if ( layout = view.layout() )?.childOf? 'View'
+  _prepareViewToShow: ( view ) ->
+    unless view in @::_toShowViews
+      @::_toShowViews.push view
+      @_prepareViewToShow layout if ( layout = view.layout() )?.childOf? 'View'
     @
 
-  hideVisibleViews: ->
-    view.hide() for view in @::visibleViews when not( view in @::toShowViews )
-    @::visibleViews = @::toShowViews
-    @::toShowViews  = []
+  _hideVisibleViews: ->
+    view.hide() for view in @::_visibleViews when not( view in @::_toShowViews )
+    @::_visibleViews = @::_toShowViews
+    @::_toShowViews  = []
     @
 
   first: ->
@@ -186,7 +186,7 @@ Nali.extend Collection:
     @[ @length - 1 ]
 
   reset: ->
-    @inside             = null
+    @_inside             = null
     @adaptations.length = 0
     @trigger 'reset'
     @

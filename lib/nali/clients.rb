@@ -18,9 +18,9 @@ module Nali
       if message[ :nali_browser_id ]
         client.browser_id = message[ :nali_browser_id ]
         client_connected( client ) if respond_to?( :client_connected )
-        client.send_json action: :onOpen
+        client.send_json action: :_onOpen
       elsif message[ :ping ]
-        client.send_json action: :pong
+        client.send_json action: :_pong
       elsif message[ :controller ]
         name = message[ :controller ].capitalize + 'Controller'
         if Math.const_defined?( name ) and controller = Object.const_get( name )

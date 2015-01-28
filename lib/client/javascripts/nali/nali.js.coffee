@@ -5,7 +5,7 @@ window.Nali =
 
   starting: ->
     for name, extension of @extensions
-      extension.runExtensions()
+      extension._runExtensions()
       extension.initialize() if extension.hasOwnProperty 'initialize'
       @starting.call extension
     @
@@ -13,19 +13,19 @@ window.Nali =
   extend: ( params ) ->
     for name, param of params
       param._name          = name
-      @[ name ]            = @extensions[ name ] = @child param
+      @[ name ]            = @extensions[ name ] = @_child param
       @[ name ].extensions = {}
 
   clone: ( params = {} ) ->
-    obj = @child params
-    obj.runCloning()
+    obj = @_child params
+    obj._runCloning()
     obj
 
-  child: ( params ) ->
+  _child: ( params ) ->
     obj         = Object.create @
     obj      :: = @
     obj[ name ] = value for name, value of params
-    obj.initObservation()
+    obj._initObservation()
     obj
 
   expand: ( obj ) ->
@@ -47,12 +47,12 @@ window.Nali =
       return true  if     @::_name is parent
     @::childOf parent
 
-  runExtensions: ( context = @ ) ->
-    @::?.runExtensions context
+  _runExtensions: ( context = @ ) ->
+    @::?._runExtensions context
     @extension.call context if @hasOwnProperty 'extension'
 
-  runCloning: ( context = @ ) ->
-    @::?.runCloning context
+  _runCloning: ( context = @ ) ->
+    @::?._runCloning context
     @cloning.call context if @hasOwnProperty 'cloning'
 
   getter: ( property, callback ) ->
@@ -70,9 +70,9 @@ window.Nali =
         @setter property, ( value ) -> obj[ property ] = value
     @
 
-  initObservation: ->
-    @observers   = []
-    @observables = []
+  _initObservation: ->
+    @_observers   = []
+    @_observables = []
     @
 
   destroyObservation: ->
@@ -80,19 +80,19 @@ window.Nali =
     @unsubscribeFromAll()
     @
 
-  addObservationItem: ( to, obj, event, callback ) ->
+  _addObservationItem: ( to, obj, event, callback ) ->
     return @ for item in @[ to ] when item[0] is obj and item[1] is event and item[2] in [ undefined, callback ]
     @[ to ].push if callback then [ obj, event, callback ] else [ obj, event ]
     @
 
-  removeObservationItem: ( from, obj, event ) ->
+  _removeObservationItem: ( from, obj, event ) ->
     for item in @[ from ][..] when item[0] is obj and ( item[1] is event or not event )
       @[ from ].splice @[ from ].indexOf( item ), 1
     @
 
   subscribe: ( observer, event, callback ) ->
-    @addObservationItem 'observers', observer, event, callback
-    observer.addObservationItem 'observables', @, event, callback
+    @_addObservationItem '_observers', observer, event, callback
+    observer._addObservationItem '_observables', @, event, callback
     @
 
   subscribeTo: ( observable, event, callback ) ->
@@ -111,8 +111,8 @@ window.Nali =
     @
 
   unsubscribe: ( observer, event ) ->
-    @removeObservationItem 'observers', observer, event
-    observer.removeObservationItem 'observables', @, event
+    @_removeObservationItem '_observers', observer, event
+    observer._removeObservationItem '_observables', @, event
     @
 
   unsubscribeFrom: ( observable, event ) ->
@@ -120,13 +120,13 @@ window.Nali =
     @
 
   unsubscribeAll: ( event ) ->
-    @unsubscribe item[0], event for item in @observers[..]
+    @unsubscribe item[0], event for item in @_observers[..]
     @
 
   unsubscribeFromAll: ( event ) ->
-    @unsubscribeFrom item[0], event for item in @observables[..]
+    @unsubscribeFrom item[0], event for item in @_observables[..]
     @
 
   trigger: ( event, args... ) ->
-    item[2].call item[0], args... for item in @observers[..] when item[1] is event
+    item[2].call item[0], args... for item in @_observers[..] when item[1] is event
     @

@@ -4,29 +4,29 @@ Nali.extend Router:
     @::expand redirect: ( args... ) => @redirect args...
     @
 
-  routes:      {}
+  _routes: {}
 
   start: ->
-    @scanRoutes()
+    @_scanRoutes()
     @_( window ).on 'popstate', ( event ) =>
       event.preventDefault()
       event.stopPropagation()
-      @saveHistory false
+      @_saveHistory = false
       @redirect event.target.location.pathname
     @
 
-  scanRoutes: ->
+  _scanRoutes: ->
     for name, controller of @Controller.extensions when controller.actions?
       route  = '^'
       route += name.lower().replace /s$/, 's*(\/|$)'
       route += '('
       route += Object.keys( controller._actions ).join '|'
       route += ')?'
-      @routes[ route ] = controller
+      @_routes[ route ] = controller
     @
 
   redirect: ( url = window.location.pathname, options = {} ) ->
-    if found = @findRoute @prepare( url ) or @prepare( @Application.defaultUrl )
+    if found = @_findRoute @_prepare( url ) or @_prepare( @Application.defaultUrl )
       { controller, action, filters, params } = found
       params[ name ] = value for name, value in options
       controller.run action, filters, params
@@ -35,14 +35,14 @@ Nali.extend Router:
     else console.warn "Not exists route to the address %s", url
     @
 
-  prepare: ( url ) ->
+  _prepare: ( url ) ->
     url = url.replace "http://#{ window.location.host }", ''
     url = url[ 1.. ]   or '' if url and url[ 0...1 ] is '/'
     url = url[ ...-1 ] or '' if url and url[ -1.. ]  is '/'
     url
 
-  findRoute: ( url ) ->
-    for route, controller of @routes when match = url.match new RegExp route, 'i'
+  _findRoute: ( url ) ->
+    for route, controller of @_routes when match = url.match new RegExp route, 'i'
       segments = ( @routedUrl = url ).split( '/' )[ 1... ]
       if segments[0] in Object.keys( controller._actions )
         action = segments.shift()
@@ -57,16 +57,9 @@ Nali.extend Router:
       return controller: controller, action: action, filters: filters, params: params
     false
 
-  saveHistory: ( value ) ->
-    @_saveHistory ?= true
-    if value in [ true, false ]
-      @_saveHistory = value
-      @
-    else @_saveHistory
-
   changeUrl: ( url = null ) ->
-    if @saveHistory()
+    if @_saveHistory
       @routedUrl = url if url?
       history.pushState null, null, '/' + ( @url = @routedUrl ) if @routedUrl isnt @url
-    else @saveHistory true
+    else @_saveHistory = true
     @

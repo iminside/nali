@@ -54,7 +54,7 @@ module Nali
     end
 
     def sync_initial( params )
-      params[ :_name ]      = self.class.name
+      params[ :name ]       = self.class.name
       params[ :attributes ] = { id: self.id }
     end
       
