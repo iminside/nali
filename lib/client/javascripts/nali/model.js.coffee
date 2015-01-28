@@ -12,16 +12,15 @@ Nali.extend Model:
     @_views = {}
 
   _tables:     {}
-  attributes: {}
   _callStack:  []
+  attributes: {}
   updated:     0
   destroyed:   false
 
   _adapt: ->
     for name, method of @ when /^__\w+/.test name
       do ( name, method ) =>
-        if typeof method is 'function'
-          @[ name[ 2.. ] ] = ( args... ) -> @[ name ] args...
+        @[ name[ 2.. ] ] = @[ name ] if typeof method is 'function'
     @_adaptViews()
     @
 
